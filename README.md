@@ -1,5 +1,5 @@
 # rodent-seg
-## Rodent segmentation with transformator models.
+## Rodent segmentation with transformer models.
 --- 
 ## Goal definition
  * Binary instance segmentation
