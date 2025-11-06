@@ -28,3 +28,4 @@ Confirms that standard consumer hardware is often insufficient.
  - An 8GB VRAM GPU, such as a 3070ti, "is definitely not enough" for larger models.   
  - For deploying a SAM 2 application, "a 16GB VRAM is the minimum I would need".   
  - Cloud-based equivalents, such as the NVIDIA T4 (16GB), are a common recommendation for this level of workload.
+Similar project: https://www.youtube.com/watch?v=cEgF0YknpZw
