@@ -1,12 +1,9 @@
 # rodent-seg
 ## Rodent segmentation with transformator models.
-### Transformers	Uses self-attention to look at all patches in all frames at once (in parallel).
- - Global Context: Natively captures long-range spatial and temporal relationships. It can easily connect frame 1 to frame 30.
- - **Computationally Expensive**: The self-attention mechanism has a computational cost that grows quadratically (O(n^2)) with the sequence length. Doubling the number of frames makes the computation roughly four times harder. This is why models often process short clips.Data-Hungry: Like all large neural networks, transformers require massive amounts of video data to be trained effectively.Complexity: These models are large and complex to train and deploy.25
 --- 
 ## Goal definition
- * Binary instance segmentation 
- * Instance recognition? 
+ * Binary instance segmentation
+ * Source: video feed
 ---
 ### Data annotation
 Automated vs. Interactive Annotation Workflows
@@ -18,10 +15,18 @@ Automated vs. Interactive Annotation Workflows
    - The mask is propagated through the video
    - The annotator reviews and corrects the annotation 
 ---
+## Generalist vs Specialist
+### Choosing a model 
+ - **memory-based models (genearlist) :**  Transformers	Uses self-attention to look at all patches in all frames at once (in parallel).
+   - **Global Context:** Natively captures long-range spatial and temporal relationships. It can easily connect frame **1** to frame **30**.
+   - **Computationally Expensive**: The self-attention mechanism has a computational cost that grows quadratically (O(n^2)) with the sequence length. Doubling the number of frames makes the computation roughly four times harder. This is why models often process short clips.Data-Hungry: Like all large neural networks, transformers require massive amounts of video data to be trained effectively.Complexity: These models are large and complex to train and deploy.
+ - memory-free models (specialist):
+   -  Smaller, faster, highly tuneable.
+   -  Will suffer from temporal flickering and occlusion problems.
+---
 ### Model fine tuning:
-#### Generalist vs Specialist. 
- - SAM2: is a great model with video segmentation, however it is not as fine tuneable. (trains only the lightweight mask decoder and prompt encoder)
- - SegFormer: This is a more "traditional" model, with great tuneability support on hugging face
+ - Generalist (SAM2): is a great model with video segmentation, however it is not as fine tuneable. (trains only the lightweight mask decoder and prompt encoder)
+ - Specialist (Mask2Former): This is a more "traditional" model, with great tuneability support on hugging face
 ---
 ### Analysis of SAM 2 applications and user reports 
 Confirms that standard consumer hardware is often insufficient.
