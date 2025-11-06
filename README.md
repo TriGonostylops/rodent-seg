@@ -25,7 +25,7 @@ Automated vs. Interactive Annotation Workflows
    -  Will suffer from temporal flickering and occlusion problems.
 ---
 ### Model fine tuning:
- - Generalist (SAM2): is a great model with video segmentation, however it is not as fine tuneable. (trains only the lightweight mask decoder and prompt encoder)
+ - Generalist  (SAM2): is a great model with video segmentation, however it is not as fine tuneable. (trains only the lightweight mask decoder and prompt encoder)
  - Specialist (Mask2Former https://huggingface.co/facebook/mask2former-swin-large-cityscapes-semantic ): This is a more "traditional" model, with great tuneability support on hugging face
 ---
 ### Analysis of SAM 2 applications and user reports 
@@ -34,3 +34,6 @@ Confirms that standard consumer hardware is often insufficient.
  - For deploying a SAM 2 application, "a 16GB VRAM is the minimum I would need".   
  - Cloud-based equivalents, such as the NVIDIA T4 (16GB), are a common recommendation for this level of workload.
 Similar project: https://www.youtube.com/watch?v=cEgF0YknpZw
+
+- SAM notebook: https://colab.research.google.com/github/roboflow-ai/notebooks/blob/main/notebooks/how-to-segment-anything-with-sam.ipynb
+- Mask2Former https://colab.research.google.com/github/NielsRogge/Transformers-Tutorials/blob/master/Mask2Former/Inference_with_Mask2Former.ipynb
