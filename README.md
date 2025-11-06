@@ -26,7 +26,7 @@ Automated vs. Interactive Annotation Workflows
 ---
 ### Model fine tuning:
  - Generalist (SAM2): is a great model with video segmentation, however it is not as fine tuneable. (trains only the lightweight mask decoder and prompt encoder)
- - Specialist (Mask2Former): This is a more "traditional" model, with great tuneability support on hugging face
+ - Specialist (Mask2Former https://huggingface.co/facebook/mask2former-swin-large-cityscapes-semantic ): This is a more "traditional" model, with great tuneability support on hugging face
 ---
 ### Analysis of SAM 2 applications and user reports 
 Confirms that standard consumer hardware is often insufficient.
