@@ -18,10 +18,13 @@ Automated vs. Interactive Annotation Workflows
 ## Generalist vs Specialist
 ### Choosing a model 
  - **memory-based models (genearlist) :**  Transformers	Uses self-attention to look at all patches in all frames at once (in parallel).
-   - **Global Context:** Natively captures long-range spatial and temporal relationships. It can easily connect frame **1** to frame **30**.
-   - **Computationally Expensive**: The self-attention mechanism has a computational cost that grows quadratically (O(n^2)) with the sequence length. Doubling the number of frames makes the computation roughly four times harder. This is why models often process short clips.Data-Hungry: Like all large neural networks, transformers require massive amounts of video data to be trained effectively.Complexity: These models are large and complex to train and deploy.
+   - **Global Context:** Natively captures long-range spatial and temporal relationships.
+   - The Trade-off: The "memory" problem is drifting.
+
+Naive Per-Frame: Fails by being jittery and inconsistent.
+
+Temporal Propagation: Fails by drifting over long videos and accumulating errors.
  - memory-free models (specialist):
-   -  Smaller, faster, highly tuneable.
    -  Will suffer from temporal flickering and occlusion problems.
 ---
 ### Model fine tuning:
