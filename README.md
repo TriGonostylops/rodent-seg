@@ -5,6 +5,13 @@
  * Binary instance segmentation
  * Source: video feed
 ---
+##**Supervised** vs **self-supervised + supervised** learning
+---
+### Self-superviesed(Masked auto encoders): 
+ - We could approach this problem as self-supervised learning problem. We have infinite amount of annotated data, so the model is able to create "jigsaw" puzzles with the masked and original images/frames
+ - The second step is to use the enhanced encoder, we can later use a pilot (small annotated dataset) to connect the encoder to the head. Then on the first few epoch we freeze the encoder, its weights aren't adjusted.
+---
+### Supervised learning 
 ### Data annotation
 Automated vs. Interactive Annotation Workflows
 #### Options for creating annotated datasets. 
@@ -40,3 +47,4 @@ Similar project: https://www.youtube.com/watch?v=cEgF0YknpZw
 
 - SAM notebook: https://colab.research.google.com/github/roboflow-ai/notebooks/blob/main/notebooks/how-to-segment-anything-with-sam.ipynb
 - Mask2Former https://colab.research.google.com/github/NielsRogge/Transformers-Tutorials/blob/master/Mask2Former/Inference_with_Mask2Former.ipynb
+  
