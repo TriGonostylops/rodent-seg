@@ -13,6 +13,11 @@
 ---
 ### Supervised learning 
 ### Data annotation
+####
+**Polygon Tracking** (best for efficient, clean shapes that need to move across frames) or **Brush/Mask** mode (best for pixel-perfect details like fur, but harder to track).
+
+For rodents, which deform and move fast, Polygon Tracking with Interpolation is usually the standard because it saves you from drawing on every single frame.
+
 Automated vs. Interactive Annotation Workflows
 #### Options for creating annotated datasets. 
  * 0-shot: Grounded SAM (https://github.com/IDEA-Research/GroundingDINO): This approach leverages two robust systems. Grounding DINO creates a bounding box around the rodent based on a prompt like 'rodent' **(Text-Driven)**, which is then segmented by the SAM model. The end result is reviewed and corrected with interactive video editing. THis is highly computing power reliant. 
