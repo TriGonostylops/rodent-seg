@@ -5,8 +5,7 @@
  * Binary instance segmentation
  * Source: video feed
 ---
-## **Supervised** vs **self-supervised + supervised** learning
----
+## **Supervised** vs **self-supervised
 ### Self-superviesed(Masked auto encoders): 
  - We could approach this problem as self-supervised learning problem. We have infinite amount of annotated data, so the model is able to create "jigsaw" puzzles with the masked and original images/frames
  - The second step is to use the enhanced encoder, we can later use a pilot (small annotated dataset) to connect the encoder to the head. Then on the first few epoch we freeze the encoder, its weights aren't adjusted.
