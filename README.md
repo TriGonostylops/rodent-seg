@@ -5,18 +5,29 @@
  * Binary instance segmentation
  * Source: video feed
 ---
-##**Supervised** vs **self-supervised + supervised** learning
+## **Supervised** vs **self-supervised + supervised** learning
 ---
 ### Self-superviesed(Masked auto encoders): 
  - We could approach this problem as self-supervised learning problem. We have infinite amount of annotated data, so the model is able to create "jigsaw" puzzles with the masked and original images/frames
  - The second step is to use the enhanced encoder, we can later use a pilot (small annotated dataset) to connect the encoder to the head. Then on the first few epoch we freeze the encoder, its weights aren't adjusted.
 ---
 ### Supervised learning 
+Fine tuning a generalist/specialist model with annotated segment masks of rats.
 ### Data annotation
-####
-**Polygon Tracking** (best for efficient, clean shapes that need to move across frames) or **Brush/Mask** mode (best for pixel-perfect details like fur, but harder to track).
-
-For rodents, which deform and move fast, Polygon Tracking with Interpolation is usually the standard because it saves you from drawing on every single frame.
+#### Brush vs polygons:
+Each has its pros and cons, in the end brush masks will be converted to polygons as well. 
+**bruhs mask:**
+ - precise
+ - could be made faster with integrated ai (irl it works like a$$)
+ - you basically need to annotate each frame by hand, because the integrated ai is useless.
+**polygon mask:**
+ - tracking mode: connects the mask and tries to predict the objects trajectory bsaed on two keyframes.
+ - slow: you can't and probably shouldn't try to create a perfect mask for each frame. This will undermine the powert of tracking mode, and creates the flickering effect.
+Brush masks generally are better for non-rigid objects. However with tracking mode, the machine can connect 2 keyframes that result in a slowly morphing mask instead of a flickering one.
+ - Use CVAT for video annotation.
+ - Use the polygon tool with tracking enabled.
+ - Rats should be segmented with 15-20 points
+ - Their tail will be a different entity, and will be tracked with the polyline tool.
 
 Automated vs. Interactive Annotation Workflows
 #### Options for creating annotated datasets. 
