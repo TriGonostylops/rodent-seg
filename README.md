@@ -60,6 +60,6 @@ Confirms that standard consumer hardware is often insufficient.
  - Cloud-based equivalents, such as the NVIDIA T4 (16GB), are a common recommendation for this level of workload.
 Similar project: https://www.youtube.com/watch?v=cEgF0YknpZw
 
-- SAM notebook: https://colab.research.google.com/github/roboflow-ai/notebooks/blob/main/notebooks/how-to-segment-anything-with-sam.ipynb
+https://github.com/facebookresearch/sam3/tree/b26a5f330e05d321afb39d01d3d4881f258f65ff?tab=License-1-ov-file
 - Mask2Former https://colab.research.google.com/github/NielsRogge/Transformers-Tutorials/blob/master/Mask2Former/Inference_with_Mask2Former.ipynb
   
