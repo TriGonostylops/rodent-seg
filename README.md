@@ -35,7 +35,43 @@ Automated vs. Interactive Annotation Workflows
    - The annotator clicks on the rodent to be segmented **(Point-Driven)** 
    - SAM creates a mask
    - The mask is propagated through the video
-   - The annotator reviews and corrects the annotation 
+   - The annotator reviews and corrects the annotation
+     
+  *Goal: Ensure high information density and eliminate bias before training.*
+
+- [ ] **Prune for Diversity (The IoU Rule):** Use a script to filter frames. If the mask overlap (Intersection over Union) between consecutive frames is >95%, discard the redundant ones. 
+- [ ] **Target Sample Size:** Aim for ~300–500 high-variety images from this specific 5-minute video rather than using all 6,000.
+- [ ] **Balance the "Corner Bias":** Ensure images of the rat in the left corner make up no more than 20–30% of your total set. Delete excess corner images to achieve balance.
+- [ ] **Capture Full Pose Variance:** Verify the dataset includes an even mix of:
+    - [ ] Stationary/Huddled
+    - [ ] Elongated/Walking
+    - [ ] Rearing (on hind legs)
+    - [ ] Grooming/Scratching
+- [ ] **Include Negative Samples (False Positives):** Add roughly 10% "empty cage" images (no rat present) to teach the model not to hallucinate masks in shadows or bedding.
+- [ ] **Geometric Augmentation Plan:** Use code (e.g., Albumentations or PyTorch) to apply:
+    - [ ] Horizontal/Vertical Flips (to move the rat to different corners).
+    - [ ] Random Rotations.
+- [ ] **Texture Augmentation:** Include Brightness/Contrast jitter and Gaussian Noise to help the model handle different lighting and sensor grain.
+
+---
+
+## 2. Image Processing & Deployment Strategy
+*Goal: Determine how the model will handle the Full HD video feed.*
+
+### Option A: Direct Full-Frame Processing
+- [ ] **Input Resizing:** Check if resizing $1920 \times 1080$ to the model's native input (usually $640 \times 640$ or $1024 \times 1024$) makes the rat too small/blurry to segment.
+- [ ] **GPU Memory:** Ensure your Kaggle instance can handle the VRAM requirements for high-resolution transformer inputs.
+
+### Option B: The Tiling Strategy (Grid Search)
+- [ ] **Overlap Management:** Ensure 512x512 tiles overlap (e.g., by 50px) so the rat isn't "cut" at a border.
+- [ ] **Stitching Logic:** Develop a method to merge masks if they appear in two adjacent tiles simultaneously.
+
+### Option C: The Hybrid "Crop-on-the-Fly" (Recommended)
+- [ ] **Step 1: Detection:** Use a lightweight detector (like YOLO) to find the rat's bounding box in the Full HD frame.
+- [ ] **Step 2: Dynamic Cropping:** Create a script to crop that box with 10–20% extra "padding" around the rat.
+- [ ] **Step 3: Segmentation:** Pass that high-detail $512 \times 512$ crop to the transformer model.
+- [ ] **Step 4: Re-projection:** Map the coordinates of the resulting mask back onto the original $1920 \times 1080$ frame for the final video output.
+   - 
 ---
 ## Generalist vs Specialist
 ### Choosing a model 
