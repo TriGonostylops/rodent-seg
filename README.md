@@ -53,6 +53,9 @@ Automated vs. Interactive Annotation Workflows
     - [ ] Random Rotations.
 - [ ] **Texture Augmentation:** Include Brightness/Contrast jitter and Gaussian Noise to help the model handle different lighting and sensor grain.
 
+- [ ] **Occlusion Handling (Cage Bars):** - [ ] Create a high-resolution static mask of the foreground cage bars.
+    - [ ] Decide on a subtraction strategy: either "striping" the training masks or using a weight-map to ignore bar pixels.
+    - [ ] Ensure the model doesn't learn the cage pattern as a "feature" of the rat by using slight translations in augmentation.
 ---
 
 ## 2. Image Processing & Deployment Strategy
