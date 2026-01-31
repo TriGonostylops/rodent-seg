@@ -4,8 +4,6 @@ import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from src import step1_extract
-# from src import step2_augment
-
 
 def main():
     print("=== RODENT SEGMENTATION PIPELINE STARTED ===")
