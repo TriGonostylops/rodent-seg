@@ -80,7 +80,6 @@ def process_extraction_loop(cap, frame_map, coco, img_dir, mask_dir):
     sorted_frames = sorted(frame_map.keys())
 
     for frame_idx in tqdm(sorted_frames, desc="Extracting"):
-        # 1. Seek and Read
         cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
         ret, frame = cap.read()
 
@@ -100,7 +99,7 @@ def process_extraction_loop(cap, frame_map, coco, img_dir, mask_dir):
 
         name = f"frame_{frame_idx:06d}"
         cv2.imwrite(str(img_dir / f"{name}.jpg"), frame)
-        cv2.imwrite(str(mask_dir / f"{name}.png"), mask * 255)  # Save as 0-255
+        cv2.imwrite(str(mask_dir / f"{name}.png"), mask * 255)
 
         saved_count += 1
 
