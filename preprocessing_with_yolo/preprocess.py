@@ -80,8 +80,8 @@ def get_augmentation():
     ])
 
 def preprocess_and_augment():
-    video_path = r"preprocessing\dav\01.59.10-02.03.13[M][0@0][0].dav"
-    labels_dir = r"preprocessing\dataset\task_1_ultralytics yolo segmentation 1.0\labels\train"
+    video_path = r"preprocessing_with_yolo\dav\01.59.10-02.03.13[M][0@0][0].dav"
+    labels_dir = r"preprocessing_with_yolo\dataset\task_1_ultralytics yolo segmentation 1.0\labels\train"
     output_dir = r"dataset\train"
     
     images_out = os.path.join(output_dir, "images")
