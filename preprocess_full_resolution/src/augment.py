@@ -4,24 +4,24 @@ import random
 import numpy as np
 import albumentations as A
 from tqdm import tqdm
-from .config import FILTERED_DIR, PROCESSED_DIR, AUGMENT_MULTIPLIER, AUGMENTATION_SEED, AUG_PROBS, TARGET_SIZE
+from src.config import FILTERED_DIR, PROCESSED_DIR, AUGMENT_MULTIPLIER, AUGMENTATION_SEED, AUG_PROBS, TARGET_SIZE
 
-from .extract_masks import setup_directories, prepare_stage
+from src.extract_masks import setup_directories, prepare_stage
 
 
 def get_augmentor():
     return A.Compose([
         A.HorizontalFlip(p=AUG_PROBS["horizontal_flip"]),
         A.VerticalFlip(p=AUG_PROBS["vertical_flip"]),
-        A.ShiftScaleRotate(
-            shift_limit=0.1,
-            scale_limit=0.2,
-            rotate_limit=15,
+        A.Affine(
+            translate_percent={"x": (-0.1, 0.1), "y": (-0.1, 0.1)},
+            scale=(0.8, 1.2),
+            rotate=(-15, 15),
             p=AUG_PROBS["shift_scale_rotate"]
         ),
         A.RandomBrightnessContrast(p=AUG_PROBS["random_brightness_contrast"]),
         A.LongestMaxSize(max_size=TARGET_SIZE),
-        A.PadIfNeeded(min_height=TARGET_SIZE, min_width=TARGET_SIZE, border_mode=cv2.BORDER_CONSTANT, value=0, mask_value=0),
+        A.PadIfNeeded(min_height=TARGET_SIZE, min_width=TARGET_SIZE, border_mode=cv2.BORDER_CONSTANT),
     ], is_check_shapes=False)
 
 
@@ -40,7 +40,7 @@ def run_augmentation():
     # Simple resizer for original images if they don't meet target size
     resizer = A.Compose([
         A.LongestMaxSize(max_size=TARGET_SIZE),
-        A.PadIfNeeded(min_height=TARGET_SIZE, min_width=TARGET_SIZE, border_mode=cv2.BORDER_CONSTANT, value=0, mask_value=0),
+        A.PadIfNeeded(min_height=TARGET_SIZE, min_width=TARGET_SIZE, border_mode=cv2.BORDER_CONSTANT),
     ], is_check_shapes=False)
 
     count = 0

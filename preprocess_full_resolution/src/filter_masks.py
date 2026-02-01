@@ -3,8 +3,8 @@ import numpy as np
 import shutil
 from tqdm import tqdm
 
-from .config import INTERIM_DIR, FILTERED_DIR, IOU_THRESHOLD
-from .extract_masks import prepare_stage
+from src.config import INTERIM_DIR, FILTERED_DIR, IOU_THRESHOLD
+from src.extract_masks import prepare_stage
 
 def calculate_iou(mask1, mask2):
     if mask1 is None or mask2 is None: return 0.0

@@ -7,7 +7,7 @@ from tqdm import tqdm
 
 from pathlib import Path
 from typing import Any
-from .config import VIDEO_PATH, XML_PATH, INTERIM_DIR
+from src.config import VIDEO_PATH, XML_PATH, INTERIM_DIR
 
 
 def setup_directories(base_dir, wipe=True):
@@ -123,7 +123,7 @@ def prepare_stage(in_dir: Path, out_dir: Path) -> tuple[list[Path], Path, Any, A
     if not in_img_dir.exists():
         raise FileNotFoundError(f"Source data not found at {in_dir}.")
 
-    out_img_dir, out_mask_dir, _ = setup_directories(out_dir, wipe=True)
+    out_img_dir, out_mask_dir, _ = setup_directories(out_dir, wipe=False)
 
     img_files = sorted(list(in_img_dir.glob("*.jpg")))
     print(f"Scanning {len(img_files)} frames from {in_dir.name}...")
@@ -133,7 +133,7 @@ def prepare_stage(in_dir: Path, out_dir: Path) -> tuple[list[Path], Path, Any, A
 def run_extraction():
     print(f"--- STEP 1: EXTRACTING FRAMES & MASKS ---")
 
-    img_dir, mask_dir, skipped = setup_directories(INTERIM_DIR, wipe=True)
+    img_dir, mask_dir, skipped = setup_directories(INTERIM_DIR, wipe=False)
 
     if skipped:
         print("Step 1 skipped (Data already ready). Moving to Step 2.")
