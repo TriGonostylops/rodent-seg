@@ -8,6 +8,7 @@ JSON_PATH = RESOURCES_DIR / "instances_default.json"
 
 OUTPUT_DIR = BASE_DIR / "dataset"
 INTERIM_DIR = OUTPUT_DIR / "interim"
+FILTERED_DIR = OUTPUT_DIR / "interim_filtered"
 PROCESSED_DIR = OUTPUT_DIR / "processed"
 
 IOU_THRESHOLD = 0.8

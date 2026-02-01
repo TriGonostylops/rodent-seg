@@ -9,7 +9,6 @@ from .config import VIDEO_PATH, JSON_PATH, INTERIM_DIR
 
 
 def setup_directories(base_dir):
-    """Cleans and recreates the output directories."""
     img_dir = base_dir / "images"
     mask_dir = base_dir / "masks"
 
@@ -75,24 +74,24 @@ def generate_binary_mask(coco, anns, height, width):
 
 
 def process_extraction_loop(cap, frame_map, coco, img_dir, mask_dir):
-
     saved_count = 0
+
     sorted_frames = sorted(frame_map.keys())
 
-    for frame_idx in tqdm(sorted_frames, desc="Extracting"):
-        cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
-        ret, frame = cap.read()
-
-        if not ret:
-            print(f"Error reading frame {frame_idx}. Stopping extraction.")
-            break
-
+    for frame_idx in tqdm(sorted_frames, desc="Extracting All Annotated"):
         img_info = frame_map[frame_idx]
         ann_ids = coco.getAnnIds(imgIds=img_info['id'])
         anns = coco.loadAnns(ann_ids)
 
         if not anns:
             continue
+
+        cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
+        ret, frame = cap.read()
+
+        if not ret:
+            print(f"Error reading frame {frame_idx}. Stopping extraction.")
+            break
 
         h, w = frame.shape[:2]
         mask = generate_binary_mask(coco, anns, h, w)
@@ -104,7 +103,6 @@ def process_extraction_loop(cap, frame_map, coco, img_dir, mask_dir):
         saved_count += 1
 
     return saved_count
-
 
 def run_extraction():
     print(f"--- STEP 1: EXTRACTING FRAMES & MASKS ---")
