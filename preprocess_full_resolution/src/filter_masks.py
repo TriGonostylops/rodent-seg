@@ -29,7 +29,7 @@ def run_filtering():
     if not in_img_dir.exists():
         raise FileNotFoundError(f"Raw data not found at {INTERIM_DIR}. Run Step 1 first.")
 
-    out_img_dir, out_mask_dir = setup_directories(FILTERED_DIR)
+    ut_img_dir, out_mask_dir, _ = setup_directories(FILTERED_DIR, wipe=True)
 
     img_files = sorted(list(in_img_dir.glob("*.jpg")))
     print(f"Scanning {len(img_files)} raw frames...")

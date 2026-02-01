@@ -8,18 +8,26 @@ from tqdm import tqdm
 from .config import VIDEO_PATH, JSON_PATH, INTERIM_DIR
 
 
-def setup_directories(base_dir):
+def setup_directories(base_dir, wipe=True):
+
     img_dir = base_dir / "images"
     mask_dir = base_dir / "masks"
 
     if base_dir.exists():
+        if not wipe:
+            has_images = any(img_dir.iterdir()) if img_dir.exists() else False
+            has_masks = any(mask_dir.iterdir()) if mask_dir.exists() else False
+
+            if has_images and has_masks:
+                print(f"[{base_dir.name}] Data found. Skipping generation (Cache Hit).")
+                return img_dir, mask_dir, True  # True = We skipped
+
         shutil.rmtree(base_dir)
 
     img_dir.mkdir(parents=True, exist_ok=True)
     mask_dir.mkdir(parents=True, exist_ok=True)
 
-    return img_dir, mask_dir
-
+    return img_dir, mask_dir, False
 
 def load_coco_data(json_path):
 
@@ -107,11 +115,14 @@ def process_extraction_loop(cap, frame_map, coco, img_dir, mask_dir):
 def run_extraction():
     print(f"--- STEP 1: EXTRACTING FRAMES & MASKS ---")
 
-    img_dir, mask_dir = setup_directories(INTERIM_DIR)
+    img_dir, mask_dir, skipped = setup_directories(INTERIM_DIR, wipe=False)
+
+    if skipped:
+        print("Step 1 skipped (Data already ready). Moving to Step 2.")
+        return
 
     coco = load_coco_data(JSON_PATH)
     frame_map = build_frame_map(coco)
-
     cap = initialize_video(VIDEO_PATH)
 
     try:
