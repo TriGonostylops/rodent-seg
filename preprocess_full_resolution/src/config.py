@@ -13,3 +13,14 @@ PROCESSED_DIR = OUTPUT_DIR / "processed"
 
 IOU_THRESHOLD = 0.8
 TARGET_SIZE = 1024
+
+# Augmentation Settings
+AUGMENT_MULTIPLIER = 1  # Number of augmented copies per original image
+AUGMENTATION_SEED = 42
+
+AUG_PROBS = {
+    "horizontal_flip": 0.5,
+    "vertical_flip": 0.1,
+    "shift_scale_rotate": 0.8,
+    "random_brightness_contrast": 0.2
+}

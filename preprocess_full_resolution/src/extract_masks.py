@@ -5,6 +5,8 @@ import numpy as np
 from pycocotools.coco import COCO
 from tqdm import tqdm
 
+from pathlib import Path
+from typing import Any
 from .config import VIDEO_PATH, JSON_PATH, INTERIM_DIR
 
 
@@ -111,6 +113,20 @@ def process_extraction_loop(cap, frame_map, coco, img_dir, mask_dir):
         saved_count += 1
 
     return saved_count
+
+def prepare_stage(in_dir: Path, out_dir: Path) -> tuple[list[Path], Path, Any, Any]:
+    in_img_dir = in_dir / "images"
+    in_mask_dir = in_dir / "masks"
+
+    if not in_img_dir.exists():
+        raise FileNotFoundError(f"Source data not found at {in_dir}.")
+
+    out_img_dir, out_mask_dir, _ = setup_directories(out_dir, wipe=True)
+
+    img_files = sorted(list(in_img_dir.glob("*.jpg")))
+    print(f"Scanning {len(img_files)} frames from {in_dir.name}...")
+    return img_files, in_mask_dir, out_img_dir, out_mask_dir
+
 
 def run_extraction():
     print(f"--- STEP 1: EXTRACTING FRAMES & MASKS ---")
