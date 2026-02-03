@@ -2,10 +2,12 @@ import shutil
 
 import cv2
 import numpy as np
-from pycocotools.coco import COCO
+import xml.etree.ElementTree as ET
 from tqdm import tqdm
 
-from .config import VIDEO_PATH, JSON_PATH, INTERIM_DIR
+from pathlib import Path
+from typing import Any
+from src.config import VIDEO_PATH, XML_PATH, INTERIM_DIR
 
 
 def setup_directories(base_dir, wipe=True):
@@ -29,34 +31,41 @@ def setup_directories(base_dir, wipe=True):
 
     return img_dir, mask_dir, False
 
-def load_coco_data(json_path):
+def load_xml_annotations(xml_path):
 
-    if not json_path.exists():
-        raise FileNotFoundError(f"JSON not found at: {json_path}")
+    if not xml_path.exists():
+        raise FileNotFoundError(f"XML not found at: {xml_path}")
 
-    print(f"Loading JSON: {json_path.name}")
-    return COCO(str(json_path))
+    print(f"Loading XML: {xml_path.name}")
+    tree = ET.parse(xml_path)
+    root = tree.getroot()
 
-
-def build_frame_map(coco):
-
-    img_ids = coco.getImgIds()
     frame_map = {}
 
-    print("Parsing frame indices...")
-    for i_id in img_ids:
-        img_info = coco.loadImgs(i_id)[0]
-        fname = img_info['file_name']
-        try:
-            # Logic: "frame_000013.jpg" -> "000013" -> 13
-            frame_str = fname.split('_')[-1].split('.')[0]
-            frame_num = int(frame_str)
-            frame_map[frame_num] = img_info
-        except ValueError:
-            print(f"Warning: Could not parse frame number from filename '{fname}'")
+    for track in root.findall('track'):
+        label = track.get('label')
+        for polygon in track.findall('polygon'):
+            # Only process keyframes that are not "outside"
+            if polygon.get('keyframe') == '1' and polygon.get('outside') == '0':
+                frame_idx = int(polygon.get('frame'))
+                points_str = polygon.get('points')
+                
+                # Parse points: "x1,y1;x2,y2;..." -> [[x1,y1], [x2,y2], ...]
+                points = []
+                for p in points_str.split(';'):
+                    if ',' in p:
+                        points.append([float(coord) for coord in p.split(',')])
+                
+                if frame_idx not in frame_map:
+                    frame_map[frame_idx] = []
+                
+                frame_map[frame_idx].append({
+                    'label': label,
+                    'points': np.array(points, dtype=np.int32)
+                })
 
     if not frame_map:
-        raise ValueError("No frames could be mapped! Check your JSON filenames.")
+        raise ValueError("No keyframes found in XML!")
 
     return frame_map
 
@@ -72,27 +81,22 @@ def initialize_video(video_path):
     return cap
 
 
-def generate_binary_mask(coco, anns, height, width):
+def generate_binary_mask(annotations, height, width):
 
     mask = np.zeros((height, width), dtype=np.uint8)
-    for ann in anns:
-        rle = coco.annToMask(ann)
-        mask = np.maximum(mask, rle)
+    for ann in annotations:
+        points = ann['points']
+        cv2.fillPoly(mask, [points], 1)
     return mask
 
 
-def process_extraction_loop(cap, frame_map, coco, img_dir, mask_dir):
+def process_extraction_loop(cap, frame_map, img_dir, mask_dir):
     saved_count = 0
 
     sorted_frames = sorted(frame_map.keys())
 
     for frame_idx in tqdm(sorted_frames, desc="Extracting All Annotated"):
-        img_info = frame_map[frame_idx]
-        ann_ids = coco.getAnnIds(imgIds=img_info['id'])
-        anns = coco.loadAnns(ann_ids)
-
-        if not anns:
-            continue
+        annotations = frame_map[frame_idx]
 
         cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
         ret, frame = cap.read()
@@ -102,7 +106,7 @@ def process_extraction_loop(cap, frame_map, coco, img_dir, mask_dir):
             break
 
         h, w = frame.shape[:2]
-        mask = generate_binary_mask(coco, anns, h, w)
+        mask = generate_binary_mask(annotations, h, w)
 
         name = f"frame_{frame_idx:06d}"
         cv2.imwrite(str(img_dir / f"{name}.jpg"), frame)
@@ -111,6 +115,20 @@ def process_extraction_loop(cap, frame_map, coco, img_dir, mask_dir):
         saved_count += 1
 
     return saved_count
+
+def prepare_stage(in_dir: Path, out_dir: Path) -> tuple[list[Path], Path, Any, Any]:
+    in_img_dir = in_dir / "images"
+    in_mask_dir = in_dir / "masks"
+
+    if not in_img_dir.exists():
+        raise FileNotFoundError(f"Source data not found at {in_dir}.")
+
+    out_img_dir, out_mask_dir, _ = setup_directories(out_dir, wipe=False)
+
+    img_files = sorted(list(in_img_dir.glob("*.jpg")))
+    print(f"Scanning {len(img_files)} frames from {in_dir.name}...")
+    return img_files, in_mask_dir, out_img_dir, out_mask_dir
+
 
 def run_extraction():
     print(f"--- STEP 1: EXTRACTING FRAMES & MASKS ---")
@@ -121,12 +139,11 @@ def run_extraction():
         print("Step 1 skipped (Data already ready). Moving to Step 2.")
         return
 
-    coco = load_coco_data(JSON_PATH)
-    frame_map = build_frame_map(coco)
+    frame_map = load_xml_annotations(XML_PATH)
     cap = initialize_video(VIDEO_PATH)
 
     try:
-        count = process_extraction_loop(cap, frame_map, coco, img_dir, mask_dir)
+        count = process_extraction_loop(cap, frame_map, img_dir, mask_dir)
     finally:
         cap.release()
 

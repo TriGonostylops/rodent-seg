@@ -5,6 +5,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from src import extract_masks
 from src import filter_masks
+from src import augment
 
 
 def main():
@@ -22,6 +23,14 @@ def main():
         filter_masks.run_filtering()
     except Exception as e:
         print(f"CRITICAL ERROR in Step 2 (Filtering): {e}")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
+
+    try:
+        augment.run_augmentation()
+    except Exception as e:
+        print(f"CRITICAL ERROR in Step 3 (Augmentation): {e}")
         import traceback
         traceback.print_exc()
         sys.exit(1)

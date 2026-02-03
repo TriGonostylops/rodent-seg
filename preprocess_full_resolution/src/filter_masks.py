@@ -2,11 +2,9 @@ import cv2
 import numpy as np
 import shutil
 from tqdm import tqdm
-from pathlib import Path
 
-# Relative imports
-from .config import INTERIM_DIR, FILTERED_DIR, IOU_THRESHOLD
-from .extract_masks import setup_directories
+from src.config import INTERIM_DIR, FILTERED_DIR, IOU_THRESHOLD
+from src.extract_masks import prepare_stage
 
 def calculate_iou(mask1, mask2):
     if mask1 is None or mask2 is None: return 0.0
@@ -23,16 +21,7 @@ def calculate_iou(mask1, mask2):
 def run_filtering():
     print(f"--- STEP 2: FILTERING (IoU < {IOU_THRESHOLD}) ---")
 
-    in_img_dir = INTERIM_DIR / "images"
-    in_mask_dir = INTERIM_DIR / "masks"
-
-    if not in_img_dir.exists():
-        raise FileNotFoundError(f"Raw data not found at {INTERIM_DIR}. Run Step 1 first.")
-
-    ut_img_dir, out_mask_dir, _ = setup_directories(FILTERED_DIR, wipe=True)
-
-    img_files = sorted(list(in_img_dir.glob("*.jpg")))
-    print(f"Scanning {len(img_files)} raw frames...")
+    img_files, in_mask_dir, out_img_dir, out_mask_dir = prepare_stage(INTERIM_DIR, FILTERED_DIR)
 
     last_saved_mask = None
     kept_count = 0
@@ -63,3 +52,4 @@ def run_filtering():
     print(f"Dropped (Static): {dropped_count}")
     print(f"Kept (Diverse): {kept_count}")
     print(f"Clean Data ready in: {FILTERED_DIR}")
+
