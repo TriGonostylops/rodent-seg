@@ -20,6 +20,8 @@ def get_augmentor():
             p=AUG_PROBS["shift_scale_rotate"]
         ),
         A.RandomBrightnessContrast(p=AUG_PROBS["random_brightness_contrast"]),
+        A.HueSaturationValue(hue_shift_limit=20, sat_shift_limit=30, val_shift_limit=20, p=AUG_PROBS.get("hue_saturation", 0.3)),
+        A.GaussNoise(std_range=(0.1, 0.3), p=AUG_PROBS.get("gauss_noise", 0.2)),
         A.LongestMaxSize(max_size=TARGET_SIZE),
         A.PadIfNeeded(min_height=TARGET_SIZE, min_width=TARGET_SIZE, border_mode=cv2.BORDER_CONSTANT),
     ], is_check_shapes=False)

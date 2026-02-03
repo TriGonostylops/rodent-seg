@@ -22,5 +22,7 @@ AUG_PROBS = {
     "horizontal_flip": 0.5,
     "vertical_flip": 0.1,
     "shift_scale_rotate": 0.8,
-    "random_brightness_contrast": 0.2
+    "random_brightness_contrast": 0.5,
+    "hue_saturation": 0.3,
+    "gauss_noise": 0.2
 }
