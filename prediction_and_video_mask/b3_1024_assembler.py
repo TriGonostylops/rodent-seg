@@ -1,148 +1,238 @@
-!pip
-install - q
-transformers
-
-import cv2
-import torch
-import numpy as np
 import os
-from transformers import SegformerImageProcessor, SegformerForSemanticSegmentation
-from PIL import Image
+import torch
+import multiprocessing
+import subprocess
+import time
+import numpy as np
+import evaluate
+from datasets import Dataset, Image as DSImage
+from transformers import (
+    SegformerImageProcessor,
+    SegformerForSemanticSegmentation,
+    TrainingArguments,
+    Trainer,
+    logging
+)
+from torch import nn
+
+# Reduce verbosity
+logging.set_verbosity_info()
+
+# --- CONFIGURATION ---
+MODEL_NAME = "nvidia/mit-b3"
+OUTPUT_DIR = "/kaggle/working/checkpoints_b3_1024"
+FINAL_MODEL_DIR = "/kaggle/working/final_rat_model_b3_1024"
+
+# --- HARDCODED PATHS ---
+IMAGE_DIR = "/kaggle/input/rodent-data-2/processed/images"
+MASK_DIR = "/kaggle/input/rodent-data-2/processed/masks"
+
+# Training Hyperparameters
+EPOCHS = 30
+LEARNING_RATE = 6e-5
+BATCH_SIZE = 1  # Must be 1 for 1024px on T4
+GRAD_ACCUMULATION = 16  # Effective Batch Size = 16
 
 
-MODEL_PATH = "/kaggle/input/datasets/gonoszgonosz/b2-1024-weights/final_rat_model_b3_1024"
+# --- 1. GPU MONITOR ---
+def monitor_gpu(interval=60):
+    while True:
+        try:
+            result = subprocess.check_output(
+                ["nvidia-smi", "--query-gpu=utilization.gpu,memory.used,memory.total", "--format=csv,noheader,nounits"]
+            ).decode().strip().split('\n')
+            stats = [f"GPU {i}: {line.split(',')[0]}% Util | {line.split(',')[1]}/{line.split(',')[2]} MB" for i, line
+                     in enumerate(result)]
+            print(f"\n[GPU MONITOR] " + " | ".join(stats) + "\n")
+        except Exception:
+            pass
+        time.sleep(interval)
 
-INPUT_VIDEO = "/kaggle/input/rat-test-video/test.mp4"
 
-OUTPUT_VIDEO = "/kaggle/working/final_rat_tracking.mp4"
+# --- 2. DATA LOAD ---
+def load_dataset():
+    print(f"--- LOADING DATA FROM: {IMAGE_DIR} ---")
+    if not os.path.exists(IMAGE_DIR):
+        raise FileNotFoundError(f"CRITICAL: {IMAGE_DIR} does not exist.")
+    if not os.path.exists(MASK_DIR):
+        raise FileNotFoundError(f"CRITICAL: {MASK_DIR} does not exist.")
 
-CONFIDENCE = 0.5  # Ignore weak predictions
-SMOOTHING_ALPHA = 0.7  # Higher = Smoother mask (less flickering)
+    all_images = [f for f in os.listdir(IMAGE_DIR) if f.endswith(('.jpg', '.png'))]
+    all_masks = [f for f in os.listdir(MASK_DIR) if f.endswith(('.jpg', '.png'))]
 
+    img_map = {os.path.splitext(f)[0]: f for f in all_images}
+    mask_map = {os.path.splitext(f)[0]: f for f in all_masks}
+
+    common_ids = sorted(list(set(img_map.keys()) & set(mask_map.keys())))
+
+    print(f"--- DIAGNOSTICS ---")
+    print(f"Valid Pairs:  {len(common_ids)}")
+
+    if len(common_ids) == 0:
+        raise ValueError("No matching image/mask pairs found!")
+
+    final_image_paths = [os.path.join(IMAGE_DIR, img_map[i]) for i in common_ids]
+    final_mask_paths = [os.path.join(MASK_DIR, mask_map[i]) for i in common_ids]
+
+    ds = Dataset.from_dict({"image": final_image_paths, "label": final_mask_paths})
+    ds = ds.cast_column("image", DSImage())
+    ds = ds.cast_column("label", DSImage())
+    ds = ds.train_test_split(test_size=0.10, seed=42)
+    return ds
+
+
+# --- 3. PROCESSOR & TRANSFORMS (FIXED) ---
+processor = SegformerImageProcessor.from_pretrained(
+    MODEL_NAME,
+    reduce_labels=False,
+    do_resize=True,
+    size={"height": 1024, "width": 1024}
+)
+
+
+def train_transforms(example_batch):
+    images = [x.convert("RGB") for x in example_batch["image"]]
+
+    # --- FIX START: FORCE BINARY MASKS ---
+    labels = []
+    for x in example_batch["label"]:
+        # 1. Convert to grayscale numpy
+        mask_np = np.array(x.convert("L"))
+        # 2. Threshold: Any value > 0 becomes 1 (Rat). 0 stays 0 (Background).
+        # This prevents "Class 255" errors.
+        mask_np = np.where(mask_np > 0, 1, 0).astype(np.uint8)
+        labels.append(mask_np)
+    # --- FIX END ---
+
+    return processor(images, labels, return_tensors="pt")
+
+
+# --- 4. SANITY CHECK ---
+def sanity_check(ds):
+    print("--- RUNNING SANITY CHECK ---")
+    sample = ds["train"][0]
+    # Process one sample manually
+    output = train_transforms({"image": [sample["image"]], "label": [sample["label"]]})
+    unique_vals = torch.unique(output["labels"]).tolist()
+    print(f"Processed Mask Values: {unique_vals}")
+
+    if any(v > 1 for v in unique_vals):
+        raise ValueError(f"❌ CRITICAL: Mask contains values {unique_vals}. Must be only [0, 1].")
+    print("✅ DATA IS SAFE.")
+
+
+# --- 5. METRICS & MODEL ---
+metric = evaluate.load("mean_iou")
+id2label = {0: "background", 1: "rat"}
+label2id = {"background": 0, "rat": 1}
+
+
+def compute_metrics(eval_pred):
+    with torch.no_grad():
+        logits, labels = eval_pred
+
+        logits_tensor = torch.from_numpy(logits)
+
+        logits_tensor = nn.functional.interpolate(
+            logits_tensor,
+            size=labels.shape[-2:],
+            mode="bilinear",
+            align_corners=False
+        ).argmax(dim=1)
+
+        metrics = metric.compute(
+            predictions=logits_tensor.numpy(),
+            references=labels,  # <--- FIXED: Removed .numpy()
+            num_labels=2,
+            ignore_index=255,
+            reduce_labels=False,
+        )
+
+        return {k: v.tolist() if isinstance(v, np.ndarray) else v for k, v in metrics.items()}
+
+
+# --- 6. TRAINER ---
+class WeightedTrainer(Trainer):
+    def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
+        labels = inputs.get("labels")
+        outputs = model(**inputs)
+        logits = outputs.get("logits")
+
+        upsampled_logits = nn.functional.interpolate(
+            logits, size=labels.shape[-2:], mode="bilinear", align_corners=False
+        )
+
+        weights = torch.tensor([1.0, 5.0]).to(logits.device)
+        loss_fct = nn.CrossEntropyLoss(weight=weights)
+
+        loss = loss_fct(upsampled_logits, labels)
+        return (loss, outputs) if return_outputs else loss
+
+
+# --- 7. MAIN ---
 def main():
-    print(f"--- STARTING RAT TRACKER ---")
+    ds = load_dataset()
 
-    if not os.path.exists(MODEL_PATH):
-        print(f" CRITICAL ERROR: Model path not found: {MODEL_PATH}")
-        return
-    if not os.path.exists(INPUT_VIDEO):
-        print(f" CRITICAL ERROR: Video path not found: {INPUT_VIDEO}")
-        return
+    # Run safety check before passing to trainer
+    sanity_check(ds)
 
-    # 2. Setup Device (GPU Check)
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    print(f" Acceleration: {device.upper()}")
-    if device == "cpu":
-        print("️ WARNING: Running on CPU. This will be slow! Enable GPU in Settings.")
+    ds["train"].set_transform(train_transforms)
+    ds["test"].set_transform(train_transforms)
 
-    # 3. Load Model
-    try:
-        print(" Loading Model...")
-        model = SegformerForSemanticSegmentation.from_pretrained(MODEL_PATH).to(device)
-        processor = SegformerImageProcessor.from_pretrained(MODEL_PATH)
-        print(" Model Loaded Successfully")
-    except Exception as e:
-        print(f" Error loading model: {e}")
-        return
+    model = SegformerForSemanticSegmentation.from_pretrained(
+        MODEL_NAME,
+        num_labels=2,
+        id2label=id2label,
+        label2id=label2id,
+        ignore_mismatched_sizes=True
+    )
 
-    # 4. Open Video
-    cap = cv2.VideoCapture(INPUT_VIDEO)
-    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    fps = cap.get(cv2.CAP_PROP_FPS)
-    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    training_args = TrainingArguments(
+        output_dir=OUTPUT_DIR,
+        learning_rate=LEARNING_RATE,
+        num_train_epochs=EPOCHS,
+        per_device_train_batch_size=BATCH_SIZE,
+        per_device_eval_batch_size=BATCH_SIZE,
+        gradient_accumulation_steps=GRAD_ACCUMULATION,
+        fp16=True,
+        eval_strategy="steps",
+        eval_steps=50,
+        save_strategy="steps",
+        save_steps=50,
+        save_total_limit=2,
+        logging_steps=10,
+        load_best_model_at_end=True,
+        metric_for_best_model="mean_iou",
+        report_to="none",
+        remove_unused_columns=False  # Keeps 'image' column for transforms
+    )
 
-    # Video Writer
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    out = cv2.VideoWriter(OUTPUT_VIDEO, fourcc, fps, (width, height))
+    trainer = WeightedTrainer(
+        model=model,
+        args=training_args,
+        train_dataset=ds["train"],
+        eval_dataset=ds["test"],
+        compute_metrics=compute_metrics,
+    )
 
-    print(f"Processing Video: {width}x{height} | {total_frames} Frames")
+    last_checkpoint = None
+    if os.path.isdir(OUTPUT_DIR):
+        checkpoints = [d for d in os.listdir(OUTPUT_DIR) if d.startswith("checkpoint-")]
+        if checkpoints:
+            checkpoints = sorted(checkpoints, key=lambda x: int(x.split("-")[1]))
+            last_checkpoint = os.path.join(OUTPUT_DIR, checkpoints[-1])
+            print(f"!!! RESUMING FROM: {last_checkpoint} !!!")
 
-    # 5. Processing Loop
-    frame_count = 0
-    previous_prob_map = None
+    print(f"--- TRAINING START: MIT-B3 @ 1024x1024 ---")
+    trainer.train(resume_from_checkpoint=last_checkpoint)
 
-    while cap.isOpened():
-        ret, frame = cap.read()
-        if not ret: break
-
-        # --- STEP 1: LETTERBOX (PAD) TO SQUARE ---
-        # Ensures the rat isn't squashed, matching training data
-        old_h, old_w = frame.shape[:2]
-        desired_size = max(old_h, old_w)
-
-        # Create black square canvas
-        square_frame = np.zeros((desired_size, desired_size, 3), dtype=np.uint8)
-
-        # Calculate centering offsets
-        y_offset = (desired_size - old_h) // 2
-        x_offset = (desired_size - old_w) // 2
-
-        # Paste original frame into center
-        square_frame[y_offset:y_offset + old_h, x_offset:x_offset + old_w] = frame
-
-        # --- STEP 2: INFERENCE ---
-        image_rgb = cv2.cvtColor(square_frame, cv2.COLOR_BGR2RGB)
-        pil_image = Image.fromarray(image_rgb)
-
-        inputs = processor(images=pil_image, return_tensors="pt").to(device)
-        with torch.no_grad():
-            outputs = model(**inputs)
-
-            # Resize logits to match the SQUARE size
-            logits = torch.nn.functional.interpolate(
-                outputs.logits,
-                size=(desired_size, desired_size),
-                mode="bilinear",
-                align_corners=False
-            )
-            probs = torch.nn.functional.softmax(logits, dim=1)
-            rat_prob = probs[0, 1, :, :]  # Class 1 = Rat
-
-            # --- STEP 3: SMOOTHING ---
-            if previous_prob_map is None:
-                smoothed_prob = rat_prob
-            else:
-                smoothed_prob = (SMOOTHING_ALPHA * rat_prob) + \
-                                ((1 - SMOOTHING_ALPHA) * previous_prob_map)
-            previous_prob_map = smoothed_prob
-
-            # Create Mask
-            mask_square = (smoothed_prob > CONFIDENCE).cpu().numpy().astype(np.uint8)
-
-        # --- STEP 4: CROP & CLEAN ---
-        # Crop back to original video size (remove black bars)
-        mask_original = mask_square[y_offset:y_offset + old_h, x_offset:x_offset + old_w]
-
-        # HIGHLANDER RULE: Keep only the largest blob
-        cnts, _ = cv2.findContours(mask_original, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        if len(cnts) > 0:
-            c = max(cnts, key=cv2.contourArea)
-            clean_mask = np.zeros_like(mask_original)
-            cv2.drawContours(clean_mask, [c], -1, 1, thickness=cv2.FILLED)
-            mask_original = clean_mask
-        else:
-            # If no rat found, mask is empty
-            mask_original = np.zeros_like(mask_original)
-
-        # --- STEP 5: OVERLAY ---
-        green_layer = np.zeros_like(frame, dtype=np.uint8)
-        green_layer[:, :] = [0, 255, 0]
-
-        rat_pixels = (mask_original == 1)
-        # Blend: 60% Original + 40% Green
-        frame[rat_pixels] = cv2.addWeighted(frame[rat_pixels], 0.6, green_layer[rat_pixels], 0.4, 0)
-
-        out.write(frame)
-
-        frame_count += 1
-        if frame_count % 100 == 0:
-            print(f"   Processed {frame_count}/{total_frames} frames...")
-
-    cap.release()
-    out.release()
-    print(f"\n DONE! Video saved to: {OUTPUT_VIDEO}")
+    print(f"--- SAVING TO {FINAL_MODEL_DIR} ---")
+    trainer.save_model(FINAL_MODEL_DIR)
+    processor.save_pretrained(FINAL_MODEL_DIR)
+    print("DONE.")
 
 
 if __name__ == "__main__":
+    p = multiprocessing.Process(target=monitor_gpu, daemon=True)
+    p.start()
     main()
