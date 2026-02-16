@@ -1,20 +1,23 @@
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
-
 RESOURCES_DIR = BASE_DIR / "resources"
-VIDEO_PATH = RESOURCES_DIR / "01.59.10-02.03.13[M][0@0][0].mp4"
-XML_PATH = RESOURCES_DIR / "annotations.xml"
 
-OUTPUT_DIR = BASE_DIR / "b5-dataset"
-INTERIM_DIR = OUTPUT_DIR / "b5-interim"
-FILTERED_DIR = OUTPUT_DIR / "b5-interim_filtered"
-PROCESSED_DIR = OUTPUT_DIR / "b5-processed"
+DATA_SAMPLES = {
+    "01.59.10-02.03.13[M][0@0][0].mp4": "annotations.xml",
+    "03.23.31-03.24.39[M][0@0][0].mp4": "03.23.31-03.24.39[M][0@0][0].xml",
+    "01.15.05-01.15.36[M][0@0][0].mp4": "01.15.05-01.15.36[M][0@0][0].xml"
+}
+
+OUTPUT_DIR = BASE_DIR / "dataset"
+INTERIM_DIR = OUTPUT_DIR / "interim"
+FILTERED_DIR = OUTPUT_DIR / "interim_filtered"
+PROCESSED_DIR = OUTPUT_DIR / "processed"
 
 IOU_THRESHOLD = 0.8
-TARGET_SIZE = 640
+TARGET_SIZE = 1024
 
-AUGMENT_MULTIPLIER = 1  # Number of augmented copies per original image
+AUGMENT_MULTIPLIER = 1
 AUGMENTATION_SEED = 42
 
 AUG_PROBS = {
