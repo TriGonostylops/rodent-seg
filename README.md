@@ -89,8 +89,10 @@
   * **Cross-Entropy Weakness:** Treats pixels as independent classifications. In 95% background images, it over-prioritizes background accuracy.
 
   * **Dice Loss Strength:** Optimizes for overlap volume. If the model misses the rat, the score is 0. This forces prioritization of the minority class.
+ 
+IoU trap: missing the entire tail only drops the score by 1%. mIoU is highly biased toward massive central body structures and is blind to thin appendages.
 
-* **Optimization:** Focal Loss (to focus on hard negatives) and Boundary IoU (to penalize contour errors).
+* **Optimization:** Focal Loss (to focus on hard negatives) and Boundary IoU (to penalize contour errors). What it examines: Strictly the perimeter (the edges/outlines) of the prediction versus the ground truth. It completely ignores the internal mass of the object.
 
 ### 3.3. Training Stability & Scheduling
 
