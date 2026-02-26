@@ -214,4 +214,5 @@ IoU trap: missing the entire tail only drops the score by 1%. mIoU is highly bia
 
 * **Foundation Model Adaptation:** Fine-tuning SAM/SAM-2 using LoRA.
 
-* **Multi-Animal Instance Segmentation:** Moving beyond the "Highlander Rule" to track social interactions.
+* Prediction using model trees?
+* 
