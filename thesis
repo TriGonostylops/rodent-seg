@@ -162,54 +162,50 @@ A dolgozat tartalmának rövid (max. 1 oldal) összefoglalása. A következő r�
 
 
 
-
 \chapter{Bevezetés}
 \pagenumbering{arabic}
 
-A kép és videfeldolgozás, közel egy idős a számítógéptudomány kialakulásával. A terület folyamatos fejlődésével egyre nagyobb pontossággal tudjuk az ember által látott világot digitalizálni és automatikusan kiértékelni. Ezzel segítve kutatásaink, műszaki cikkeink pontosságának és hatékonyságának növekedését.
-A magas szintű képfeldolgozási technológiák, mint képszegmentálás, objektum detektálás és követés majdnem minden területen alap pillérré vált. Ezek gyakran más tudományokkal ötvözve, sokszínű kihívásokkal találják szemben magukat.
+\section{A szemantikus szegmentálás}
+% TODO: Define semantic segmentation explicitly here.
+
+\section{Hagyományos megoldások a képfeldolgozásban}
+A kép és videfeldolgozás, közel egy idős a számítógéptudomány kialakulásával. A terület folyamatos fejlődésével egyre nagyobb pontossággal tudjuk az ember által látott világot digitalizálni és automatikusan kiértékelni. Ezzel segítve kutatásaink, műszaki cikkeink pontosságának és hatékonyságának növekedését. A magas szintű képfeldolgozási technológiák, mint képszegmentálás, objektum detektálás és követés majdnem minden területen alap pillérré vált. Ezek gyakran más tudományokkal ötvözve, sokszínű kihívásokkal találják szemben magukat.
 
 A kihívás áthidalására az 1970-es években még csak a klasszikus képfeldolgozói eszközök, mint küszöbölés, éldetektálás stb. nyújtottak segítséget.
 
+\section{Mélytanulás a szemantikus szegmentálásban}
 Következő ugrásnak a mély neurális hálózatok számítottak. Ezek maguktól nyerik ki a jellemzőket, súlyozásuk és működésük a végpontokon kívül emberi interpretációra alkalmatlan. A milliós mélységű rétegek súlyozására és tanítására sokkal nagyobb erőforrás és adat igény van viszont komplex feladatok megoldására is alkalmas. A kezdetleges rekurrens neurális hálózatok főbb problémái közé tartozik, hogy a modellek nem tudtak hosszútávú összefüggéseket megőrizni. Eleinte futószalag szerűen működtek, az információt elemenként, gyakorlatilag egy irányba propagálták. Erre több megoldás is született, de egyik se volt képes teljesen feloldani a kihívást.
 
-A legdominánsabb törekvéseket napjainkban a transzformer modellek képviselik. Ezek az adatot egészben, párhuzamosan elemzik. Így a vizsgált jellemzőt a kontextusba tudja helyezni ami jelentősen képes javítani a teljesítményt.
-
-
-
-
-
-
+\section{Képek és videók szegmentálása}
+% TODO: Explain the difference and added complexity of video vs image segmentation.
 
 \newpage
-\chapter{Célkitűzés?!??}
-\pagenumbering{arabic}
+\chapter{Transzformer Architektúrák}
 
-NEM TUDOM VAN E ÉRTELME ENNEKA A CÍMNEK/oldalnak
+A legdominánsabb törekvéseket napjainkban a transzformer modellek képviselik. Ezek az adatot egészben, párhuzamosan elemzik. Így a vizsgált jellemzőt a kontextusba tudja helyezni ami jelentősen képes javítani a teljesítményt.
+% TODO: Expand on what the transformer architecture is and what it is generally used for.
 
-Ezek az eszközök a biológia világában is hatalmas terhet tudnak levenni a kutatók válláról. A technológia fejlődése jelentősen formálja a sejtek, növények és állatok kutatását is.
-A dolgozat ebből a nagy halmazból az  állatviselkedés-tanhoz elengedhetetlen videószegmentálást vizsgálja meg közelebbről.
+\newpage
+\chapter{Kutatási Cél és Problémafelvetés}
+
+Ezek az eszközök a biológia világában is hatalmas terhet tudnak levenni a kutatók válláról. A technológia fejlődése jelentősen formálja a sejtek, növények és állatok kutatását is. A dolgozat ebből a nagy halmazból az állatviselkedés-tanhoz elengedhetetlen videószegmentálást vizsgálja meg közelebbről.
 
 A cél a transzformer modellek átültetésének megismerése a vizuális feladatok ellátására. A modelleket a rágcsáló szegmentálás kifejezetten specifikus szakterülete mentén ejtjük meg. Megvizsgáljuk a legkorszerűbb törekvések működési elveit és releváns metrikák mentén összevetjük őket.
 
-
-
-\newpage
-\chapter{}
-\pagenumbering{arabic}
-
-
-
-
-
-
-
-
-
-
-
+\section{A részleges takarás problémája}
+% TODO: Introduce the specific problem of partial occlusion in rodent tracking.
 
 \newpage
+\chapter{Alkalmazott Modellek és Módszerek}
+% TODO: Detail the tested models, training datasets, accepted inputs/prompts, and execution environment.
+
+\newpage
+\chapter{Eredmények és Finomhangolás}
+% TODO: Present empirical and quantitative results, details of fine-tuning, and performance improvements.
+
+\newpage
+\chapter{Következtetés}
+% TODO: Final evaluation of whether the models are suitable for the targeted goal.
 \begin{bibdiv}
 \begin{biblist}
  \addcontentsline{toc}{chapter}{Irodalomjegyzék}
