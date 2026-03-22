@@ -165,8 +165,10 @@ A dolgozat tartalmának rövid (max. 1 oldal) összefoglalása. A következő r�
 \chapter{Bevezetés}
 \pagenumbering{arabic}
 
-\section{A szemantikus szegmentálás}
-% TODO: Define semantic segmentation explicitly here.
+\section{A szemantikus szegmentálás definíciója}
+A számítógépes látás (computer vision) feladatait a komplexitásuk alapján több szintre sorolhatjuk. Míg a képosztályozás (image classification) csupán annyit állapít meg, hogy mi található a képen, az objektumdetektálás (object detection) már egy befoglaló dobozzal (bounding box) a helyét is megjelöli.
+
+A szemantikus szegmentálás (semantic segmentation) ezeknél egy jóval finomabb, pixelszintű megértést követel meg \cite{minaee2022image}. Ennek során az algoritmus a bemeneti kép minden egyes képpontjához (pixeléhez) hozzárendel egy specifikus osztálycímkét (class label). A feladat kimenete nem egy koordináta-halmaz, hanem egy a bemenettel megegyező felbontású szegmentációs maszk, amely pontosan körvonalazza a keresett objektumokat (jelen esetben a rágcsálót), élesen elválasztva azokat a háttértől és más zavaró tényezőktől.
 
 \section{Hagyományos megoldások a képfeldolgozásban}
 
@@ -176,23 +178,77 @@ Ezeknek a feladatoknak a megoldására az 1970-es és 1980-as években kizáról
 
 \section{Mélytanulás a szemantikus szegmentálásban: a transzformerek előtt}
 
-A következő áttörő sikert a mély neurális hálózatok (Deep Neural Networks, DNN), azon belül is a konvolúciós neurális hálózatok (Convolutional Neural Networks, CNN) megjelenése jelentette \cite{krizhevsky2012imagenet}. A hagyományos módszerekkel ellentétben, ahol a jellemzőket (feature-öket) a mérnökök manuálisan definiálták, a CNN-ek a betanítás során maguktól képesek a releváns vizuális jellemzők kinyerésére. Bár ezen modellek belső reprezentációi ember számára nem interpretálhatók (fekete doboz jellegűek), komplex vizuális feladatok megoldásában felülmúlták a klasszikus algoritmusokat.
+A következő áttörő sikert a mély neurális hálózatok (Deep Neural Networks, DNN), azon belül is a konvolúciós neurális hálózatok (Convolutional Neural Networks, CNN) megjelenése jelentette \cite{krizhevsky2012imagenet}. A hagyományos módszerekkel ellentétben, ahol a jellemzőket (feature) a mérnökök manuálisan definiálták, a CNN-ek a betanítás során maguktól képesek a releváns vizuális jellemzők kinyerésére. Bár ezen modellek belső reprezentációi ember számára nem interpretálhatók (fekete doboz jellegűek), komplex vizuális feladatok megoldásában felülmúlták a klasszikus algoritmusokat.
 
 A CNN-alapú architektúrák (mint a U-Net \cite{ronneberger2015u}) forradalmasították a képszegmentálást, azonban rendelkeznek egy alapvető korláttal: a konvolúciós rétegek lokális receptív mezővel (receptive field) dolgoznak. Ez azt jelenti, hogy a hálózat nehezen képes a kép távoli pontjai között összefüggést találni. Ezért a részleges takarás globális kontextus hiányában több objektum detektálásához vezet.
 
-\chapter{Transzformer Architektúrák}
-A lokális fókusz problémájának feloldására napjaink legkorszerűbb (state-of-the-art) megoldásait a transzformer modellek, azon belül is a vizuális transzformerek (Vision Transformers, ViT) képviselik. A transzformerek alapvető újítása az önfigyelmi mechanizmus (self-attention mechanism). Ennek segítségével a modell az adatot nem csupán lokális ablakokon keresztül vizsgálja, hanem képes a kép vagy videó egymástól távol eső részletei közötti kontextuális kapcsolatok súlyozására és párhuzamos feldolgozására. Ez a globális kontextus-megértés jelentősen javítja a modell teljesítményét a korábbi architektúrákhoz képest.
-% TODO: Expand on what the transformer architecture is and what it is generally used for.
 
+\section{Kép- és videószegmentálás különbségei}
+
+Míg a klasszikus megoldások és a korai CNN architektúrák (mint a U-Net) statikus képek feldolgozására lettek optimalizálva, a videók szegmentálása egy új dimenziót vezet be: az időt. Egyetlen kép szegmentálása kizárólag a térbeli (spatial) kontextus megértésén alapul. Videók esetében a bemenet egymást követő képkockák (frame-ek) sorozata.
+
+Ez az időbeli (temporal) dimenzió megnöveli a feladat komplexitását. A videókon gyakori a mozgási elmosódás (motion blur), a megvilágítás dinamikus változása, valamint a maszkok képkockák közötti inkonzisztenciája (amikor a szegmentáció villog, vagy alakja indokolatlanul torzul). A konvolúciós hálózatok a videók feldolgozását hagyományosan 3D konvolúcióval próbálták megoldani, amely rendkívül számításigényes és az időbeli dimenzióban is lokális fókuszú maradt.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\chapter{Transzformer Architektúrák}
+
+A lokális fókusz problémájának minimalizálására napjaink legkorszerűbb megoldásait a transzformer modellek, azon belül is a vizuális transzformerek (Vision Transformers, ViT) képviselik \cite{dosovitskiy2020image}. A transzformerek alapvető újítása az önfigyelmi mechanizmus (self-attention mechanism). Ennek segítségével a modell az adatot nem csak egy ablakokon keresztül vizsgálja, hanem képes a kép vagy videó egymástól távol eső részletei közötti kontextuális kapcsolatok súlyozására és párhuzamos feldolgozására.
+
+\section{A Vision Transformer (ViT) működési elve}
+
+A vizuális transzformerek gyökeresen eltérő megközelítést alkalmaznak a képek feldolgozására, mint a konvolúciós hálózatok. Ahelyett, hogy csúszóablakos módszerrel (sliding window) vonnának ki jellemzőket, a ViT architektúra a bemeneti képet fix méretű, egymást nem fedő négyzetekre, úgynevezett patch-ekre (például $16 \times 16$ pixeles területekre) bontja.
+
+Ezeket a kétdimenziós patch-eket a modell egydimenziós vektorokká lapítja (flattening), majd egy lineáris vetítés (linear projection) során egy dimenziós vektorrá alakítja. Ezen a ponton a transzformer a patch-eket pontosan úgy kezeli, mintha azok egy mondat szavai (tokenjei) lennének a természetesnyelv-feldolgozásban (NLP).
+
+Mivel a transzformer architektúra önmagában nem rendelkezik térbeli információval, elengedhetetlen a pozicionális kódolás (positional embedding) alkalmazása. Minden egyes patch vektorához hozzáadnak egy egyedi matematikai azonosítót, amely kódolja az eredeti képen elfoglalt térbeli pozícióját. Ennek és a párhuzamos feldolgozásnak köszönhetően az önfigyelmi mechanizmus képes az összes képrészletet egyszerre vizsgálni, így már a legelső lépésben létrejön a globális kontextus.
+
+\section{Globális kontextus és önfigyelem}
+
+A pozicionális információval ellátott vektorok ezt követően a transzformer kódoló (encoder) rétegeibe kerülnek. Itt lép működésbe az önfigyelmi mechanizmus, amely minden egyes patch esetében kiszámítja, hogy az mennyire releváns a kép összes többi patch-e szempontjából.
+
+ Míg a konvolúciós hálózatoknál a távoli képpontok összekapcsolásához mély rétegekre és az információ jelentős tömörítésére van szükség, a ViT közvetlen matematikai kapcsolatot létesít a kép bármely két pontja között, függetlenül azok fizikai távolságától. Ez a képesség teszi a transzformereket különösen alkalmassá az olyan összetett vizuális feladatok megoldására, mint a részleges takarás (occlusion) kezelése az objektumok szegmentálása során.
 \newpage
+
+
+
+
+
+
+
+
 \chapter{Kutatási Cél és Problémafelvetés}
 
 Ezek az eszközök a biológia világában is hatalmas terhet tudnak levenni a kutatók válláról. A technológia fejlődése jelentősen formálja a sejtek, növények és állatok kutatását is. A dolgozat ebből a nagy halmazból az állatviselkedés-tanhoz elengedhetetlen videószegmentálást vizsgálja meg közelebbről.
 
 A cél a transzformer modellek átültetésének megismerése a vizuális feladatok ellátására. A modelleket a rágcsáló szegmentálás kifejezetten specifikus szakterülete mentén ejtjük meg. Megvizsgáljuk a legkorszerűbb törekvések működési elveit és releváns metrikák mentén összevetjük őket.
 
+
+
+
+
 \section{A részleges takarás problémája}
-% TODO: Introduce the specific problem of partial occlusion in rodent tracking.
+
+A laboratóriumi videófelvételek elemzése során az egyik legnagyobb kihívást a részleges takarás (occlusion) jelenti. Jelen kutatás és a felhasznált adathalmazok egy szigorú peremfeltétellel dolgoznak: a felvételeken minden esetben kizárólag egyetlen vizsgált állat szerepel. Ennek következtében a több állat megkülönböztetését igénylő példányszegmentálás (instance segmentation), illetve a takarások során fellépő azonosító-csere (identity switch / mask swap) problémaköre a jelen vizsgálat szempontjából irreleváns.
+
+A probléma forrását kizárólag a laboratóriumi környezet statikus fizikai elemei -- például etetők, itatók vagy a ketrec vastag rácsai -- jelentik, amelyek gyakran kitakarják a rágcsáló testének egy részét. Ez a jelenség a hagyományos, lokális receptív mezővel dolgozó hálózatok (CNN-ek) számára kritikus kihívás. Mivel egy akadály (például egy ketrecrács) fizikailag kettévágja a rágcsáló folytonos pixelhalmazát a képen, a lokális modellek hajlamosak a takarás két oldalán lévő testrészeket független objektumokként kezelni, vagy a globális kontextus hiányában a rács mögötti kisebb testrészt teljesen elhagyni.
+
+A kutatás fő kérdése, hogy a transzformerek önfigyelmi mechanizmusa (self-attention) -- amely a globális kontextus révén képes áthidalni a fizikai megszakításokat -- fel tudja-e ismerni, hogy az akadály által elválasztott pixelhalmazok ugyanahhoz az egyetlen rágcsálóhoz tartoznak, ezáltal robusztusabb és pontosabb szegmentációs maszkot hozva létre a takarás ellenére is.
+
 
 \newpage
 \chapter{Alkalmazott Modellek és Módszerek}
@@ -210,6 +266,21 @@ A cél a transzformer modellek átültetésének megismerése a vizuális felada
 \begin{bibdiv}
 \begin{biblist}
  \addcontentsline{toc}{chapter}{Irodalomjegyzék}
+
+\bib{minaee2022image}{article}{
+  author={Minaee, Shervin},
+  author={Boykov, Yuri Y.},
+  author={Porikli, Fatih},
+  author={Plaza, Antonio},
+  author={Kehtarnavaz, Nasser},
+  author={Terzopoulos, Demetri},
+  title={Image segmentation using deep learning: A survey},
+  journal={IEEE Transactions on Pattern Analysis and Machine Intelligence},
+  volume={44},
+  number={7},
+  pages={3523--3542},
+  date={2022}
+}
 
 \bib{krizhevsky2012imagenet}{article}{
   author={Krizhevsky, Alex},
@@ -229,6 +300,24 @@ A cél a transzformer modellek átültetésének megismerése a vizuális felada
   journal={Medical Image Computing and Computer-Assisted Intervention -- MICCAI 2015},
   pages={234--241},
   date={2015}
+}
+
+\bib{dosovitskiy2020image}{article}{
+  author={Dosovitskiy, Alexey},
+  author={Beyer, Lucas},
+  author={Kolesnikov, Alexander},
+  author={Weissenborn, Dirk},
+  author={Zhai, Xiaohua},
+  author={Unterthiner, Thomas},
+  author={Dehghani, Mostafa},
+  author={Minderer, Matthias},
+  author={Heigold, Georg},
+  author={Gelly, Sylvain},
+  author={Uszkoreit, Jakob},
+  author={Houlsby, Neil},
+  title={An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale},
+  journal={International Conference on Learning Representations (ICLR)},
+  date={2021}
 }
 
 \end{biblist}
