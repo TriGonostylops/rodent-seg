@@ -189,21 +189,11 @@ Míg a klasszikus megoldások és a korai CNN architektúrák (mint a U-Net) sta
 
 Ez az időbeli (temporal) dimenzió megnöveli a feladat komplexitását. A videókon gyakori a mozgási elmosódás (motion blur), a megvilágítás dinamikus változása, valamint a maszkok képkockák közötti inkonzisztenciája (amikor a szegmentáció villog, vagy alakja indokolatlanul torzul). A konvolúciós hálózatok a videók feldolgozását hagyományosan 3D konvolúcióval próbálták megoldani, amely rendkívül számításigényes és az időbeli dimenzióban is lokális fókuszú maradt.
 
+\section{A kutatás gyakorlati kontextusa: laboratóriumi megfigyelések}
 
+A számítógépes látás egyik kiemelt biológiai alkalmazási területe az állatviselkedés-tan (etológia). Ezen kutatások során gyakran készülnek hosszas videófelvételek különböző színű és mintázatú patkányokról. A megfigyelések tipikusan standardizált laboratóriumi ketrecekben történnek, amelyeket általában két, különböző szögből pozicionált kamera rögzít párhuzamosan. A természetes viselkedés kiváltása érdekében a ketrecben különféle tereptárgyak, játékok és etető találhatók. Jelen kutatás szempontjából egy rendkívül fontos feltétel, hogy egy ketrecben mindig pontosan egy rágcsáló tartózkodik.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+Mivel a rágcsálók éjszakai életmódot folytatnak, a legaktívabb periódusaik megfigyelése sötétben történik, amihez a videókat infravörös (IR) kamerákkal rögzítik. Ez a specifikus környezet számos komoly kihívást állít a gépi látásra épülő modellek elé. Az infravörös felvételek színv hiánya megnehezíti a felismerést. Ezt a feladatot tovább bonyolítja a patkányok rendkívül rugalmas teste, a gyakran önmagába tekeredő és folyamatosan változó testtartás, a gyors mozgásokból fakadó mozgási elmosódás, valamint a ketrecben elhelyezett tereptárgyak általi kitakarás.
 
 \chapter{Transzformer Architektúrák}
 
@@ -231,23 +221,7 @@ A pozicionális információval ellátott vektorok ezt követően a transzformer
 
 
 
-\chapter{Kutatási Cél és Problémafelvetés}
 
-Ezek az eszközök a biológia világában is hatalmas terhet tudnak levenni a kutatók válláról. A technológia fejlődése jelentősen formálja a sejtek, növények és állatok kutatását is. A dolgozat ebből a nagy halmazból az állatviselkedés-tanhoz elengedhetetlen videószegmentálást vizsgálja meg közelebbről.
-
-A cél a transzformer modellek átültetésének megismerése a vizuális feladatok ellátására. A modelleket a rágcsáló szegmentálás kifejezetten specifikus szakterülete mentén ejtjük meg. Megvizsgáljuk a legkorszerűbb törekvések működési elveit és releváns metrikák mentén összevetjük őket.
-
-
-
-
-
-\section{A részleges takarás problémája}
-
-A laboratóriumi videófelvételek elemzése során az egyik legnagyobb kihívást a részleges takarás (occlusion) jelenti. Jelen kutatás és a felhasznált adathalmazok egy szigorú peremfeltétellel dolgoznak: a felvételeken minden esetben kizárólag egyetlen vizsgált állat szerepel. Ennek következtében a több állat megkülönböztetését igénylő példányszegmentálás (instance segmentation), illetve a takarások során fellépő azonosító-csere (identity switch / mask swap) problémaköre a jelen vizsgálat szempontjából irreleváns.
-
-A probléma forrását kizárólag a laboratóriumi környezet statikus fizikai elemei -- például etetők, itatók vagy a ketrec vastag rácsai -- jelentik, amelyek gyakran kitakarják a rágcsáló testének egy részét. Ez a jelenség a hagyományos, lokális receptív mezővel dolgozó hálózatok (CNN-ek) számára kritikus kihívás. Mivel egy akadály (például egy ketrecrács) fizikailag kettévágja a rágcsáló folytonos pixelhalmazát a képen, a lokális modellek hajlamosak a takarás két oldalán lévő testrészeket független objektumokként kezelni, vagy a globális kontextus hiányában a rács mögötti kisebb testrészt teljesen elhagyni.
-
-A kutatás fő kérdése, hogy a transzformerek önfigyelmi mechanizmusa (self-attention) -- amely a globális kontextus révén képes áthidalni a fizikai megszakításokat -- fel tudja-e ismerni, hogy az akadály által elválasztott pixelhalmazok ugyanahhoz az egyetlen rágcsálóhoz tartoznak, ezáltal robusztusabb és pontosabb szegmentációs maszkot hozva létre a takarás ellenére is.
 
 
 \newpage
