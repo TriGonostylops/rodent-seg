@@ -169,21 +169,19 @@ A dolgozat tartalmának rövid (max. 1 oldal) összefoglalása. A következő r�
 % TODO: Define semantic segmentation explicitly here.
 
 \section{Hagyományos megoldások a képfeldolgozásban}
-A kép és videfeldolgozás, közel egy idős a számítógéptudomány kialakulásával. A terület folyamatos fejlődésével egyre nagyobb pontossággal tudjuk az ember által látott világot digitalizálni és automatikusan kiértékelni. Ezzel segítve kutatásaink, műszaki cikkeink pontosságának és hatékonyságának növekedését. A magas szintű képfeldolgozási technológiák, mint képszegmentálás, objektum detektálás és követés majdnem minden területen alap pillérré vált. Ezek gyakran más tudományokkal ötvözve, sokszínű kihívásokkal találják szemben magukat.
 
-A kihívás áthidalására az 1970-es években még csak a klasszikus képfeldolgozói eszközök, mint küszöbölés, éldetektálás stb. nyújtottak segítséget.
+A digitális kép- és videófeldolgozás gyakorlati alkalmazása közel egyidős a számítógéptudománnyal, és az 1960-as évek óta folyamatosan fejlődik. A terület folyamatos fejlődésével egyre nagyobb pontossággal tudjuk a fizikai világot valameilyen méréssel (TODO:GEMEINI fact chack i think this is more precise) digitalizálni és automatikusan kiértékelni, ami elengedhetetlen a modern kutatások és ipari alkalmazások hatékonyságának növeléséhez. A magas szintű gépi látás (computer vision) technológiák, mint a képszegmentálás, az objektumdetektálás és a követés (tracking), ma már szinte minden tudományterületen alappillérnek számítanak.
 
-\section{Mélytanulás a szemantikus szegmentálásban}
-Következő ugrásnak a mély neurális hálózatok számítottak. Ezek maguktól nyerik ki a jellemzőket, súlyozásuk és működésük a végpontokon kívül emberi interpretációra alkalmatlan. A milliós mélységű rétegek súlyozására és tanítására sokkal nagyobb erőforrás és adat igény van viszont komplex feladatok megoldására is alkalmas. A kezdetleges rekurrens neurális hálózatok főbb problémái közé tartozik, hogy a modellek nem tudtak hosszútávú összefüggéseket megőrizni. Eleinte futószalag szerűen működtek, az információt elemenként, gyakorlatilag egy irányba propagálták. Erre több megoldás is született, de egyik se volt képes teljesen feloldani a kihívást.
+Ezeknek a feladatoknak a megoldására az 1970-es és 1980-as években kizárólag a klasszikus, analitikus képfeldolgozói eszközök, mint például a küszöbölés (thresholding) vagy az éldetektálás nyújtottak segítséget. Ezek az algoritmusok jól definiált, egyszerű környezetben működtek, a vlátozást nem képesek kezelni. Így összetett vagy rossz megvilágítású, zajos képek esetében korlátozottnak bizonyultak.
 
-\section{Képek és videók szegmentálása}
-% TODO: Explain the difference and added complexity of video vs image segmentation.
+\section{Mélytanulás a szemantikus szegmentálásban: a transzformerek előtt}
 
-\newpage
+A következő áttörő sikert a mély neurális hálózatok (Deep Neural Networks, DNN), azon belül is a konvolúciós neurális hálózatok (Convolutional Neural Networks, CNN) megjelenése jelentette. A hagyományos módszerekkel ellentétben, ahol a jellemzőket (feature-öket) a mérnökök manuálisan definiálták, a CNN-ek a betanítás során maguktól képesek a releváns vizuális jellemzők kinyerésére. Bár ezen modellek belső reprezentációi ember számára nem interpretálhatók (fekete doboz jellegűek), komplex vizuális feladatok megoldásában felülmúlták a klasszikus algoritmusokat.
+
+A CNN-alapú architektúrák (mint a U-Net) forradalmasították a képszegmentálást, azonban rendelkeznek egy alapvető korláttal: a konvolúciós rétegek lokális receptív mezővel (receptive field) dolgoznak. Ez azt jelenti, hogy a hálózat nehezen képes a kép távoli pontjai között összefüggést találni. Ezért a részleges takarás globális kontextus hiányában több objektum detektálásához vezet.
+
 \chapter{Transzformer Architektúrák}
-
-A legdominánsabb törekvéseket napjainkban a transzformer modellek képviselik. Ezek az adatot egészben, párhuzamosan elemzik. Így a vizsgált jellemzőt a kontextusba tudja helyezni ami jelentősen képes javítani a teljesítményt.
-% TODO: Expand on what the transformer architecture is and what it is generally used for.
+A lokális fókusz problémájának feloldására napjaink legkorszerűbb (state-of-the-art) megoldásait a transzformer modellek, azon belül is a vizuális transzformerek (Vision Transformers, ViT) képviselik. A transzformerek alapvető újítása az önfigyelmi mechanizmus (self-attention mechanism). Ennek segítségével a modell az adatot nem csupán lokális ablakokon keresztül vizsgálja, hanem képes a kép vagy videó egymástól távol eső részletei közötti kontextuális kapcsolatok súlyozására és párhuzamos feldolgozására. Ez a globális kontextus-megértés jelentősen javítja a modell teljesítményét a korábbi architektúrákhoz képest.% TODO: Expand on what the transformer architecture is and what it is generally used for.
 
 \newpage
 \chapter{Kutatási Cél és Problémafelvetés}
