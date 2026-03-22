@@ -1,0 +1,297 @@
+\documentclass[a4paper,12pt]{report}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\def\magyarOptions{defaults=hu-min}
+\usepackage[magyar]{babel}
+\usepackage{amsthm, amssymb,amsmath,hyperref}
+\usepackage{enumerate, graphicx, xcolor}
+
+\usepackage{chngcntr}
+\counterwithout{figure}{chapter}
+\counterwithout{figure}{section}
+\counterwithout{figure}{subsection}
+%\usepackage{pgf,tikz,float}
+%\usepackage{tikzlings}
+%\usepackage{tikzducks}
+%\usetikzlibrary{arrows}
+\usepackage[nobysame]{amsrefs}
+%\usepackage{amsmath}
+
+\usepackage{geometry}
+ \geometry{
+ a4paper,
+ total={160mm,247mm},
+ left=25mm,
+ top=25mm,
+ }
+
+
+\newtheorem{theo}{tétel}[section]
+\newtheorem{defin}[theo]{definíció}
+\newtheorem{lemma}[theo]{lemma}
+\newtheorem{all}[theo]{állítás}
+\newtheorem{kov}[theo]{következmény}
+
+\theoremstyle{definition}
+\newtheorem{definition}[theo]{definíció}
+
+\theoremstyle{remark}
+\newtheorem{megj}[theo]{megjegyzés}
+
+
+
+
+\date{today}
+
+\linespread{1.3}
+
+
+
+\begin{document}
+\thispagestyle{empty}
+
+\begin{center}
+ {\Large A dolgozat formai követelményei}
+\end{center}
+
+\vspace{1 cm}
+
+{\bf Ajánlott oldalszám:}
+\begin{itemize}
+\item BSc szakdolgozat: 20-25 oldal,
+\item MSc diplomamunka: 35-50 oldal
+\item Tanárszakos szakdolgozat: 50000-80000 karakter szóközökkel (lásd. TKK szabályzat)
+\end{itemize}
+
+\vspace{1 cm}
+
+{\bf Másfeles sorköz, sorkizárt, 12-es betű méret (általában Computer Modern), margók: jobb, bal, lent és fent 2,5 cm} (ahogy ez a template van beállítva, az jó).
+
+\vspace{1 cm}
+
+{\bf Kötelező elemei a dolgozatnak}
+\begin{itemize}
+    \item Címlap
+    \item Tartalmi összefoglaló (kivonat)
+    \item Tartalomjegyzék
+    \item \textcolor{red}{Érdemi rész}
+(Szakterület specifikus fejezeteket tartalmaz, kérjük, konzultáljon a témavezetővel, hogy a példában közzétett kísérletes tudományterületeken használt fejezetekből az Ön dolgozatában melyikre van szükség!)
+
+
+
+
+\item Irodalomjegyzék
+
+
+
+
+
+\item Nyilatkozat
+\end{itemize}
+\newpage
+
+
+
+\pagenumbering{roman}
+
+%Elso  oldal
+\thispagestyle{empty}
+
+\begin{center}
+\vspace*{0.2cm} {\Large\bf Szegedi Tudományegyetem}
+\vspace{0.3cm}
+
+{\Large\bf Természettudományi és Informatikai Kar}
+\vspace{0.3cm}
+
+{\Large\bf XXXXXXX Intézet, XXXXXXXXX Tanszék}
+\vspace{3cm}
+
+
+
+{\Large SZAKDOLGOZAT}
+% BSc és tanárszak esetén, szakdolg., MSc esetén diplomamunka
+
+\vspace*{1.5cm}
+
+{\LARGE\bf Rágcsálók szegmentálása transzformer modellekel}
+
+opcionálisan, formázatlanul
+A szakdolgozat angol címe
+
+
+
+\vspace*{4cm}
+
+{\large
+\begin{tabular}{c@{\hspace{2cm}}c}
+\emph{Készítette:}     &\emph{Témavezető:}\\
+\bf{Végzős Edömér}  &\bf{Dr. Kiváló Kitti}\\
+XXXXXX BSc hallgató    & egyetemi docens\\
+&
+\end{tabular}
+}
+
+\vspace*{1,5cm}
+
+{\Large Szeged\\ \vspace{2mm} 2026}
+\end{center}
+
+%masodik oldal osszefogalalo
+\begin{abstract}
+A dolgozat tartalmának rövid (max. 1 oldal) összefoglalása. A következő részekből áll: rövid irodalmi összefoglaló, a dolgozat elkészítéséhez használt módszerek, eredmények, konklúzió
+
+{\bf Kulcsszavak:} a dolgozat tartalmára specifikusan jellemző 4-6 szó, egymástól vesszővel elválasztva
+\end{abstract}
+
+
+
+\newpage
+
+
+\pagebreak
+
+\tableofcontents
+\pagebreak
+%\listoffigures
+%\pagebreak
+
+
+
+
+
+
+
+
+\chapter{Bevezetés}
+\pagenumbering{arabic}
+
+A kép és videfeldolgozás, közel egy idős a számítógéptudomány kialakulásával. A terület folyamatos fejlődésével egyre nagyobb pontossággal tudjuk az ember által látott világot digitalizálni és automatikusan kiértékelni. Ezzel segítve kutatásaink, műszaki cikkeink pontosságának és hatékonyságának növekedését.
+A magas szintű képfeldolgozási technológiák, mint képszegmentálás, objektum detektálás és követés majdnem minden területen alap pillérré vált. Ezek gyakran más tudományokkal ötvözve, sokszínű kihívásokkal találják szemben magukat.
+
+A kihívás áthidalására az 1970-es években még csak a klasszikus képfeldolgozói eszközök, mint küszöbölés, éldetektálás stb. nyújtottak segítséget.
+
+Következő ugrásnak a mély neurális hálózatok számítottak. Ezek maguktól nyerik ki a jellemzőket, súlyozásuk és működésük a végpontokon kívül emberi interpretációra alkalmatlan. A milliós mélységű rétegek súlyozására és tanítására sokkal nagyobb erőforrás és adat igény van viszont komplex feladatok megoldására is alkalmas. A kezdetleges rekurrens neurális hálózatok főbb problémái közé tartozik, hogy a modellek nem tudtak hosszútávú összefüggéseket megőrizni. Eleinte futószalag szerűen működtek, az információt elemenként, gyakorlatilag egy irányba propagálták. Erre több megoldás is született, de egyik se volt képes teljesen feloldani a kihívást.
+
+A legdominánsabb törekvéseket napjainkban a transzformer modellek képviselik. Ezek az adatot egészben, párhuzamosan elemzik. Így a vizsgált jellemzőt a kontextusba tudja helyezni ami jelentősen képes javítani a teljesítményt.
+
+
+
+
+
+
+
+\newpage
+\chapter{Célkitűzés?!??}
+\pagenumbering{arabic}
+
+NEM TUDOM VAN E ÉRTELME ENNEKA A CÍMNEK/oldalnak
+
+Ezek az eszközök a biológia világában is hatalmas terhet tudnak levenni a kutatók válláról. A technológia fejlődése jelentősen formálja a sejtek, növények és állatok kutatását is.
+A dolgozat ebből a nagy halmazból az  állatviselkedés-tanhoz elengedhetetlen videószegmentálást vizsgálja meg közelebbről.
+
+A cél a transzformer modellek átültetésének megismerése a vizuális feladatok ellátására. A modelleket a rágcsáló szegmentálás kifejezetten specifikus szakterülete mentén ejtjük meg. Megvizsgáljuk a legkorszerűbb törekvések működési elveit és releváns metrikák mentén összevetjük őket.
+
+
+
+\newpage
+\chapter{}
+\pagenumbering{arabic}
+
+
+
+
+
+
+
+
+
+
+
+
+\newpage
+\begin{bibdiv}
+\begin{biblist}
+ \addcontentsline{toc}{chapter}{Irodalomjegyzék}
+
+
+\bib{ALE3}{article}{
+author={A. L. Edmonds},
+title={The geometry of an equifacetal simplex},
+journal={Indiana University Reprint},
+date={2003},
+}
+
+
+\bib{AC64}{book}{
+author={N. Altshiller-Court},
+title={Modern Pure Solid Geometry},
+publisher={Chelsea Publishing Co., N. Y.},
+date={1964},
+}
+
+
+\bib{WSB}{article}{
+author={J. Gipsz},
+author={M. Kalányos},
+author={Z. Kovács},
+title={The Chasm},
+journal={Doom II.},
+volume={76},
+date={1963},
+pages={661–669}
+}
+
+\bib{MD}{article}{
+author={J. Monroe},
+author={M. O'Donnel},
+title={The kiss},
+journal={Amer. Math. Monthly},
+volume={76},
+date={1969},
+pages={661–663}
+}
+\end{biblist}
+\end{bibdiv}
+
+\newpage
+{\Huge \bf Nyilatkozat}
+
+ \addcontentsline{toc}{chapter}{Nyilatkozat}
+
+\vspace{2 cm}
+
+{\it A szöveg kötött, kérjük ezt használni!}
+
+Alulírott, Végzős Edömér, xxxx szakos hallgató, kijelentem, hogy a szakdolgozatban ismertetettek saját munkám eredményei, és minden felhasznált, nem saját munkából származó eredmény esetén hivatkozással jelöltem annak forrását.
+
+
+\begin{flushleft}
+\vspace*{1cm}
+Szeged, \today
+\end{flushleft}
+
+\begin{flushright}
+ \vspace*{1cm}
+ \makebox[7cm]{\rule{6cm}{.4pt}}\\
+ \makebox[7cm]{\emph{Végzős Edömér}}
+\end{flushright}
+
+\pagebreak
+
+\newpage
+{\Huge \bf Mellékletek}
+
+ \addcontentsline{toc}{chapter}{Mellékletek}
+
+\vspace{2 cm}
+
+(nem kötelező elem, a dolgozat oldalszámaiba nem tartozik bele.), (új oldalon kezdve)
+
+Ebben a fejezetben lehet elhelyezni a nagyobb táblázatokat, ábrákat, adathalmazokat.
+
+
+\end{document}
+
+
+
