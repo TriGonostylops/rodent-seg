@@ -223,10 +223,37 @@ A pozicionális információval ellátott vektorok ezt követően a transzformer
 
 
 
-
-\newpage
 \chapter{Alkalmazott Modellek és Módszerek}
-% TODO: Detail the tested models, training datasets, accepted inputs/prompts, and execution environment.
+
+A kitűzött probléma -- a rágcsálók részleges takarásban történő szegmentálása -- vizsgálatára először olyan előre betanított (pre-trained) alapmodelleket vizsgáltunk, amelyek képesek további tanítás nélkül, úgynevezett zero-shot módon elvégezni a feladatot. A kísérlet célja annak elemzése, hogy az eltérő promptolási stratégiákkal vezérelt transzformer architektúrák hogyan teljesítenek ugyanazon az etológiai adathalmazon.
+
+\section{Vizsgált zero-shot modellek és promptolási stratégiák}
+
+\subsection{Florence-2: Általános célú látás-nyelvi modell}
+A Microsoft által fejlesztett Florence-2 \cite{xiao2024florence} egy szekvenciától-szekvenciáig (sequence-to-sequence) tanuló architektúra, amely a nyelvi modellek (LLM) logikáját ülteti át a látási feladatokra. A promptolhatósága tisztán szöveges: a kísérlet során a modell a specifikus \texttt{<REFERRING\_EXPRESSION\_SEGMENTATION>} feladatkódot és a "rat" promptot kapta meg bemenetként.
+
+\textbf{A maszkgenerálás folyamata és korlátai:} A hagyományos szegmentációs hálózatokkal (pl. U-Net) ellentétben a Florence-2 kimenete nem egy képpontonkénti valószínűségi térkép. Amikor a látó- és nyelvi kódolók feldolgozzák a patkány képét és a szöveget, a dekódoló (decoder) szöveges tokeneket generál. Ezek a tokenek annak a poligonnak (sokszögnek) a koordinátáit írják le, amely körbezárja a keresett objektumot. Ezeket a szöveges koordinátákat a futtatás során egy utófeldolgozó lépésben geometriailag kell bináris maszkká konvertálni.
+Mivel a maszk nem sűrű pixelbecslésből, hanem diszkrét sarokpontok összekötéséből születik, a modell nehezebben követi le a biológiai, amorf formákat. Részleges takarás esetén a poligon-alapú generálás gyakran elvérzik, mivel a hálózat nehezen ír le egymástól elszakított, de mégis egy entitáshoz tartozó komplex alakzatokat.
+
+\subsection{Segment Anything Model 2 (SAM 2) - Oracle Prompt}
+A Meta által publikált SAM 2 \cite{ravi2024sam2} ezzel szemben egy dedikált, pixelszintű szegmentációs alapmodell, amely beépített memóriamodulja révén képes a videók tér-időbeli (spatiotemporal) feldolgozására.
+
+\textbf{A térbeli prompt szükségessége:} A Florence-2-vel ellentétben a SAM 2 "szemantikailag vak". Nem rendelkezik olyan nyelvi szótárral, amivel értelmezni tudná a "patkány" szót; csupán azt a vizuális koncepciót érti, hogy mi számít "objektumnak" a háttérhez képest. Éppen ezért a működéséhez elengedhetetlen egy térbeli (spatial) ős, amely megmutatja a hálózatnak, hogy pontosan hol keresse a célobjektumot. Ha a modell megkapja a dobozt, a könnyű maszk-dekódolója (mask decoder) extrém pontosságú sűrű maszkot generál.
+Ahhoz, hogy a kísérletben a modell maximális szegmentációs képességeit mérjük a takarások során, az "Oracle Bounding Box" stratégiát alkalmaztuk. Ennek során a modell minden képkockán megkapta a kézzel annotált (ground truth) maszkból kiszámított tökéletes befoglaló dobozt. A modell legnagyobb korlátja tehát az, hogy külső algoritmus vagy emberi interakció (térbeli prompt) nélkül képtelen az automatizált feladatvégzésre.
+
+\subsection{Grounded-SAM 2: Automatizált promptolás}
+A SAM 2 térbeli prompt-igényének és a szöveges automatizálásnak az ötvözésére egy hibrid rendszert, a Grounded-SAM 2 architektúrát is vizsgáltuk.
+Ez a folyamat két független modell egymásba fűzésére épül. Első lépésként a Grounding DINO \cite{liu2024grounding} nevű, nyelv-vezérelt nyílt halmazú (open-set) objektumdetektor kapja meg a "rat." szöveget. A DINO kimenetként egy befoglaló dobozt generál, amelyet a rendszer automatikusan továbbít a SAM 2 modellnek. A SAM 2 ezután a kapott doboz alapján elkészíti a végső szegmentációs maszkot.
+
+\textbf{Korlátok:} Egy ilyen csővezeték (pipeline) pontossága mindig a leggyengébb láncszemen múlik. Hiába képes a SAM 2 tökéletes szegmentálásra, ha a Grounding DINO az a változó kontrasztú, tárgyakkal teli ketrecben részleges takarás miatt nem ismeri fel a rágcsálót, vagy túl tág dobozt rajzol köré, a SAM 2 elkerülhetetlenül a hibás területet fogja szegmentálni.
+
+\section{Adat-előkészítés és adathalmaz}
+A kísérletekhez felhasznált adathalmaz három laboratóriumi videófelvételből (mp4 formátum) és a hozzájuk tartozó, CVAT szoftverrel készített XML annotációkból épült fel. A redundancia elkerülése érdekében az egymást követő képkockákat egy szűrőalgoritmuson engedtük át: ha két egymást követő annotált maszk közötti átfedés (IoU) meghaladta a 0.8-as küszöbértéket, a képkocka eldobásra került.
+
+A szűrt adathalmazt az Albumentations könyvtár segítségével augmentáltuk. A képek és a hozzájuk tartozó maszkok 1:1 arányban (AUGMENT\_MULTIPLIER = 1) estek át geometriai (tükrözés, forgatás, skálázás) és képpont-szintű (fényerő-kontraszt változtatás, Gauss-zaj) transzformációkon. A képeket egységesen 1024x1024 pixeles felbontásra méreteztük és kereteztük (padding). A végleges, kiértékelésre szánt teszthalmaz így 306 darab kép-maszk párból állt.
+
+\section{Futtatási környezet}
+A transzformer modellek futtatása és kiértékelése (inferencia) egy felhőalapú Kaggle környezetben történt. A hardveres gyorsítást két darab NVIDIA Tesla T4 grafikus feldolgozóegység (GPU) biztosította. Az algoritmusok implementációja Python nyelven, a PyTorch mélytanulási keretrendszer és a Hugging Face Transformers könyvtár (4.44.2 verzió) alkalmazásával készült.
 
 \newpage
 \chapter{Eredmények és Finomhangolás}
@@ -293,6 +320,67 @@ A pozicionális információval ellátott vektorok ezt követően a transzformer
   journal={International Conference on Learning Representations (ICLR)},
   date={2021}
 }
+
+\bib{xiao2024florence}{article}{
+  author={Xiao, Bin},
+  author={Wu, Haiping},
+  author={Xu, Weijian},
+  author={Dai, Xiyang},
+  author={Hu, Houdong},
+  author={Lu, Yumao},
+  author={Zeng, Michael},
+  author={Liu, Ce},
+  author={Yuan, Lu},
+  title={Florence-2: Advancing a unified representation for a variety of vision tasks},
+  journal={Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
+  pages={4818--4829},
+  date={2024}
+}
+
+\bib{ravi2024sam2}{article}{
+  author={Ravi, Nikhila},
+  author={Gabeur, Valentin},
+  author={Hu, Yuan-Ting},
+  author={Hu, Ronghang},
+  author={Ryali, Chaitanya},
+  author={Ma, Tengyu},
+  author={Khedr, Haitham},
+  author={Rädle, Roman},
+  author={Rolland, Chloe},
+  author={Gustafson, Laura},
+  author={Mintun, Eric},
+  author={Pan, Junting},
+  author={Alwala, Kalyan Vasudev},
+  author={Carion, Nicolas},
+  author={Wu, Chao-Yuan},
+  author={Girshick, Ross},
+  author={Dollár, Piotr},
+  author={Feichtenhofer, Christoph},
+  title={SAM 2: Segment Anything in Images and Videos},
+  journal={arXiv preprint arXiv:2408.00714},
+  date={2024}
+}
+
+\bib{liu2024grounding}{article}{
+  author={Liu, Shilong},
+  author={Zeng, Zhaoyang},
+  author={Ren, Tianhe},
+  author={Li, Feng},
+  author={Zhang, Hao},
+  author={Yang, Jie},
+  author={Li, Chunyuan},
+  author={Yang, Jianwei},
+  author={Su, Hang},
+  author={Zhu, Jun},
+  author={Zhang, Lei},
+  title={Grounding DINO: Marrying DINO with Grounded Pre-training for Open-Set Object Detection},
+  journal={Computer Vision -- ECCV 2024. Lecture Notes in Computer Science},
+  volume={15105},
+  publisher={Springer, Cham},
+  date={2024}
+}
+
+
 
 \end{biblist}
 \end{bibdiv}
