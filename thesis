@@ -180,38 +180,52 @@ Ezeknek a feladatoknak a megoldására az 1970-es és 1980-as években kizáról
 
 A következő áttörő sikert a mély neurális hálózatok (Deep Neural Networks, DNN), azon belül is a konvolúciós neurális hálózatok (Convolutional Neural Networks, CNN) megjelenése jelentette \cite{krizhevsky2012imagenet}. A hagyományos módszerekkel ellentétben, ahol a jellemzőket (feature) a mérnökök manuálisan definiálták, a CNN-ek a betanítás során maguktól képesek a releváns vizuális jellemzők kinyerésére. Bár ezen modellek belső reprezentációi ember számára nem interpretálhatók (fekete doboz jellegűek), komplex vizuális feladatok megoldásában felülmúlták a klasszikus algoritmusokat.
 
-A CNN-alapú architektúrák (mint a U-Net \cite{ronneberger2015u}) forradalmasították a képszegmentálást, azonban rendelkeznek egy alapvető korláttal: a konvolúciós rétegek lokális receptív mezővel (receptive field) dolgoznak. Ez azt jelenti, hogy a hálózat nehezen képes a kép távoli pontjai között összefüggést találni. Ezért a részleges takarás globális kontextus hiányában több objektum detektálásához vezet.
+A CNN-alapú architektúrák (mint a U-Net \cite{ronneberger2015u}) forradalmasították a képszegmentálást, azonban rendelkeznek egy alapvető korláttal: a konvolúciós rétegek lokális receptív mezővel (receptive field) dolgoznak. Ez azt jelenti, hogy a pooling, azaz a kép feldolgozása a rétegek mélységének növekedésével az adott jellemzőtérkép (feature map) pozicionális információja elveszik. Habár a U-net a hidak (skip connection) segítségével biztosítja a patchek közötti viszony megőrzését, nem biztosít kontextust a mélyebb rétegek számára.
 
 
-\section{Kép- és videószegmentálás különbségei}
 
-Míg a klasszikus megoldások és a korai CNN architektúrák (mint a U-Net) statikus képek feldolgozására lettek optimalizálva, a videók szegmentálása egy új dimenziót vezet be: az időt. Egyetlen kép szegmentálása kizárólag a térbeli (spatial) kontextus megértésén alapul. Videók esetében a bemenet egymást követő képkockák (frame-ek) sorozata.
 
-Ez az időbeli (temporal) dimenzió megnöveli a feladat komplexitását. A videókon gyakori a mozgási elmosódás (motion blur), a megvilágítás dinamikus változása, valamint a maszkok képkockák közötti inkonzisztenciája (amikor a szegmentáció villog, vagy alakja indokolatlanul torzul). A konvolúciós hálózatok a videók feldolgozását hagyományosan 3D konvolúcióval próbálták megoldani, amely rendkívül számításigényes és az időbeli dimenzióban is lokális fókuszú maradt.
 
 \section{A kutatás gyakorlati kontextusa: laboratóriumi megfigyelések}
 
 A számítógépes látás egyik kiemelt biológiai alkalmazási területe az állatviselkedés-tan (etológia). Ezen kutatások során gyakran készülnek hosszas videófelvételek különböző színű és mintázatú patkányokról. A megfigyelések tipikusan standardizált laboratóriumi ketrecekben történnek, amelyeket általában két, különböző szögből pozicionált kamera rögzít párhuzamosan. A természetes viselkedés kiváltása érdekében a ketrecben különféle tereptárgyak, játékok és etető találhatók. Jelen kutatás szempontjából egy rendkívül fontos feltétel, hogy egy ketrecben mindig pontosan egy rágcsáló tartózkodik.
 
-Mivel a rágcsálók éjszakai életmódot folytatnak, a legaktívabb periódusaik megfigyelése sötétben történik, amihez a videókat infravörös (IR) kamerákkal rögzítik. Ez a specifikus környezet számos komoly kihívást állít a gépi látásra épülő modellek elé. Az infravörös felvételek színv hiánya megnehezíti a felismerést. Ezt a feladatot tovább bonyolítja a patkányok rendkívül rugalmas teste, a gyakran önmagába tekeredő és folyamatosan változó testtartás, a gyors mozgásokból fakadó mozgási elmosódás, valamint a ketrecben elhelyezett tereptárgyak általi kitakarás.
+-----(EZ CSAK AKKOR HA MARAD IDŐ ESTI ADAT ANNOTÁCIÓRA)-----------
+Mivel a rágcsálók éjszakai életmódot folytatnak, a legaktívabb periódusaik megfigyelése sötétben történik, amihez a videókat infravörös (IR) kamerákkal rögzítik. Ez a specifikus környezet számos komoly kihívást állít a gépi látásra épülő modellek elé. Az infravörös felvételek szín hiánya ronthatja a működést.
+
+
+
+
+
+\section{A videó alapú adatfeldolgozás kihívásai}
+
+A klasszikus képszegmentációs feladatok jellemzően ideálisan beállított, éles, statikus fotókkal dolgoznak. Jelen kutatás adatforrása azonban folyamatos laboratóriumi videófelvétel. Bár az algoritmikus feldolgozás során a videót egyedi képkockákra (frame-ekre) bontjuk és egymástól független, statikus képekként elemezzük, maguk a felvételek magukon hordozzák a videós formátumból fakadó minőségi problémákat.
+
+A feladat komplexitását az adja, hogy a képkockák függetlenítése miatt elveszítjük az időbeli (temporal) dimenziót. Míg a kifejezetten videókra tervezett hálózatok (mint a később tárgyalt SAM 2) az előző képkockák ismeretét (memóriát) felhasználva képesek áthidalni egy-egy rossz minőségű, elmosódott pillanatot, az általunk vizsgált térbeli (spatial) architektúrák erre nem képesek. A tisztán képalapú hálózatoknak (mint a Florence-2 vagy a SegFormer) minden egyes zajos, elmosódott vagy részlegesen kitakart képkockát önmagában, előzetes kontextus nélkül kell helyesen és konzisztensen szegmentálniuk.
+
+
+
+
+
+
 
 \chapter{Transzformer Architektúrák}
 
-A lokális fókusz problémájának minimalizálására napjaink legkorszerűbb megoldásait a transzformer modellek, azon belül is a vizuális transzformerek (Vision Transformers, ViT) képviselik \cite{dosovitskiy2020image}. A transzformerek alapvető újítása az önfigyelmi mechanizmus (self-attention mechanism). Ennek segítségével a modell az adatot nem csak egy ablakokon keresztül vizsgálja, hanem képes a kép vagy videó egymástól távol eső részletei közötti kontextuális kapcsolatok súlyozására és párhuzamos feldolgozására.
+A konvolúciós hálózatok lokális fókuszából fakadó korlátok meghaladására napjaink legkorszerűbb megoldásai egy teljesen új paradigmát, a vizuális transzformereket (Vision Transformers, ViT) alkalmazzák \cite{dosovitskiy2020image}. Ezek az architektúrák nem a meglévő konvolúciós eljárásokat próbálják javítani, hanem egy teljesen eltérő utat, az önfigyelmi mechanizmust (self-attention mechanism) használják. Ezáltal a modell felhagy a csúszóablakok használatával, és a feldolgozás az első lépésétől kezdve képes a kép vagy videó egymástól távol eső részletei közötti kontextuális kapcsolatok közvetlen súlyozására és párhuzamos feldolgozására.
 
 \section{A Vision Transformer (ViT) működési elve}
 
-A vizuális transzformerek gyökeresen eltérő megközelítést alkalmaznak a képek feldolgozására, mint a konvolúciós hálózatok. Ahelyett, hogy csúszóablakos módszerrel (sliding window) vonnának ki jellemzőket, a ViT architektúra a bemeneti képet fix méretű, egymást nem fedő négyzetekre, úgynevezett patch-ekre (például $16 \times 16$ pixeles területekre) bontja.
+A ViT architektúra a bemeneti képet fix méretű, egymást nem fedő négyzetekre, úgynevezett patch-ekre (például $16 \times 16$ pixeles területekre) bontja.
 
-Ezeket a kétdimenziós patch-eket a modell egydimenziós vektorokká lapítja (flattening), majd egy lineáris vetítés (linear projection) során egy dimenziós vektorrá alakítja. Ezen a ponton a transzformer a patch-eket pontosan úgy kezeli, mintha azok egy mondat szavai (tokenjei) lennének a természetesnyelv-feldolgozásban (NLP).
+A kivágott kétdimenziós patch-eket a modell először egyetlen hosszú, nyers pixelértékeket tartalmazó tömbbé lapítja (flattening). Ezt követően egy betanítható lineáris vetítés (linear projection) ezeket a nyers adatokat egy fix hosszúságú ($D$-dimenziós) absztrakt jellemzővektorrá (embedding) alakítja át. Ezen a ponton a transzformer a patch-eket pontosan úgy kezeli, mintha azok egy mondat szavai (tokenjei) lennének a természetesnyelv-feldolgozásban (NLP).
 
-Mivel a transzformer architektúra önmagában nem rendelkezik térbeli információval, elengedhetetlen a pozicionális kódolás (positional embedding) alkalmazása. Minden egyes patch vektorához hozzáadnak egy egyedi matematikai azonosítót, amely kódolja az eredeti képen elfoglalt térbeli pozícióját. Ennek és a párhuzamos feldolgozásnak köszönhetően az önfigyelmi mechanizmus képes az összes képrészletet egyszerre vizsgálni, így már a legelső lépésben létrejön a globális kontextus.
+Mivel a transzformer architektúra önmagában nem rendelkezik térbeli információval, elengedhetetlen a pozicionális kódolás (positional embedding) alkalmazása. Minden egyes patch vektorához hozzáadnak egy egyedi azonosítót, amely kódolja az eredeti képen elfoglalt térbeli pozícióját. Ennek és a párhuzamos feldolgozásnak köszönhetően az önfigyelmi mechanizmus képes az összes képrészletet egyszerre vizsgálni, így már a legelső lépésben létrejön a globális kontextus.
 
 \section{Globális kontextus és önfigyelem}
 
 A pozicionális információval ellátott vektorok ezt követően a transzformer kódoló (encoder) rétegeibe kerülnek. Itt lép működésbe az önfigyelmi mechanizmus, amely minden egyes patch esetében kiszámítja, hogy az mennyire releváns a kép összes többi patch-e szempontjából.
 
- Míg a konvolúciós hálózatoknál a távoli képpontok összekapcsolásához mély rétegekre és az információ jelentős tömörítésére van szükség, a ViT közvetlen matematikai kapcsolatot létesít a kép bármely két pontja között, függetlenül azok fizikai távolságától. Ez a képesség teszi a transzformereket különösen alkalmassá az olyan összetett vizuális feladatok megoldására, mint a részleges takarás (occlusion) kezelése az objektumok szegmentálása során.
+ Míg a konvolúciós hálózatoknál a távoli képpontok összekapcsolásához mély rétegekre és az információ jelentős tömörítésére van szükség, a ViT közvetlen matematikai kapcsolatot létesít a kép bármely két pontja között, függetlenül azok távolságától. Ez a képesség teszi a transzformereket kifejezetten alkalmassá az olyan összetett vizuális feladatok megoldására, mint a részleges takarás (occlusion) kezelése az objektumok szegmentálása során.
 \newpage
 
 
@@ -225,39 +239,239 @@ A pozicionális információval ellátott vektorok ezt követően a transzformer
 
 \chapter{Alkalmazott Modellek és Módszerek}
 
-A kitűzött probléma -- a rágcsálók részleges takarásban történő szegmentálása -- vizsgálatára először olyan előre betanított (pre-trained) alapmodelleket vizsgáltunk, amelyek képesek további tanítás nélkül, úgynevezett zero-shot módon elvégezni a feladatot. A kísérlet célja annak elemzése, hogy az eltérő promptolási stratégiákkal vezérelt transzformer architektúrák hogyan teljesítenek ugyanazon az etológiai adathalmazon.
+A kitűzött probléma vizsgálatára először olyan előre betanított (pre-trained) alapmodelleket vizsgáltunk, amelyek képesek további tanítás nélkül elvégezni a feladatot. A kísérlet célja annak elemzése, hogy az eltérő stratégiákkal vezérelt transzformer architektúrák hogyan teljesítenek ugyanazon az etológiai adathalmazon.
 
-\section{Vizsgált zero-shot modellek és promptolási stratégiák}
+\section{Vizsgáltált általános célú alap modellek}
+
+
+
+
+
 
 \subsection{Florence-2: Általános célú látás-nyelvi modell}
-A Microsoft által fejlesztett Florence-2 \cite{xiao2024florence} egy szekvenciától-szekvenciáig (sequence-to-sequence) tanuló architektúra, amely a nyelvi modellek (LLM) logikáját ülteti át a látási feladatokra. A promptolhatósága tisztán szöveges: a kísérlet során a modell a specifikus \texttt{<REFERRING\_EXPRESSION\_SEGMENTATION>} feladatkódot és a "rat" promptot kapta meg bemenetként.
 
-\textbf{A maszkgenerálás folyamata és korlátai:} A hagyományos szegmentációs hálózatokkal (pl. U-Net) ellentétben a Florence-2 kimenete nem egy képpontonkénti valószínűségi térkép. Amikor a látó- és nyelvi kódolók feldolgozzák a patkány képét és a szöveget, a dekódoló (decoder) szöveges tokeneket generál. Ezek a tokenek annak a poligonnak (sokszögnek) a koordinátáit írják le, amely körbezárja a keresett objektumot. Ezeket a szöveges koordinátákat a futtatás során egy utófeldolgozó lépésben geometriailag kell bináris maszkká konvertálni.
-Mivel a maszk nem sűrű pixelbecslésből, hanem diszkrét sarokpontok összekötéséből születik, a modell nehezebben követi le a biológiai, amorf formákat. Részleges takarás esetén a poligon-alapú generálás gyakran elvérzik, mivel a hálózat nehezen ír le egymástól elszakított, de mégis egy entitáshoz tartozó komplex alakzatokat.
+A Microsoft által fejlesztett Florence-2 \cite{xiao2024florence} multimodális alapmodell (multimodal foundation model). A hagyományos vizuális transzformerek (ViT) jellemzően egy-egy specifikus feladat (például csak osztályozás vagy csak detektálás) megoldásában jeleskedtek. A Florence-2 célja ezzel szemben egy olyan egységes reprezentáció létrehozása, amely a természetesnyelv-feldolgozásban (NLP) már bevált szöveges utasítások (promptok) alapján elméletben bármilyen vizuális feladatot képes ellátni.
+
+A modell architektúrájának két kulcsfontosságú dimenziót kell egyszerre kezelnie: a térbeli hierarchiát (spatial hierarchy) és a szemantikai részletességet (semantic granularity) \cite{xiao2024florence}. Ez a gyakorlatban azt jelenti, hogy a hálózat képes az átfogó képi kontextus értelmezésétől egészen a finom, pixelszintű objektum-szegmentálásig mindent, egyetlen keretrendszerben végrehajtani.
+
+Ezen generalista működés eléréséhez a hagyományos felügyelt tanulás túlságosan merev, míg az önfelügyelt tanulás gyakran a vizuális jegyek aránytalan túlhangsúlyozásához vezet. Ezért a Florence-2, úgynevezett multitask tanulási paradigmát alkalmaz. A betanításhoz a fejlesztők létrehozták az FLD-5B adathalmazt, amely 126 millió képet és 5,4 milliárd átfogó annotációt tartalmaz \cite{xiao2024florence}. Ezt a gigászi adathalmazt több specializált modell kollaborációjával generálták. A generalista képesség kulcsa, hogy a betanítás során az eltérő típusú annotációkat egységes szöveges formátumra (textual output) alakítottak át. Így a teljes hálózat egyetlen közös veszteségfüggvénnyel (loss function) optimalizálható.
+
+A feladatokat a hálózat egy szekvenciától-szekvenciáig (sequence-to-sequence) felépítésben, három fő szinten dolgozza fel \cite{xiao2024florence}:
+\begin{itemize}
+    \item \textbf{Képszintű megértés (Image-level understanding):} Osztályozás és átfogó feliratozás (captioning).
+    \item \textbf{Régió/Pixelszintű felismerés (Region/pixel-level recognition):} Objektumok térbeli lokalizációja, például objektumdetektálás és szegmentálás.
+    \item \textbf{Finomhangolt vizuális-szemantikus illesztés (Fine-grained visual-semantic alignment):} Komplex összefüggések keresése a kép régiói és a szöveges promptok között.
+\end{itemize}
+
+A kísérlet során a modell a specifikus \texttt{<REFERRING\_EXPRESSION\_SEGMENTATION>} feladatkódot és a "rat" promptot kapta meg bemenetként.
+
+\textbf{A maszkgenerálás folyamata és korlátai:} A hagyományos szegmentációs hálózatokkal (pl. U-Net) ellentétben a Florence-2 kimenete nem egy képpont szintű maszk. Ennek a sequence-to-sequence paradigmának a megértéséhez fontos átlátni a modell belső reprezentációját. A Florence-2 a vizuális feladatok egységesítése érdekében a képen lévő folytonos pixelkoordinátákat diszkrét, úgynevezett "lokációs tokenekké" (location tokens) kvantálja (a hálózat a képet egy 1000x1000-es rácsra vetíti, és ehhez rendel kódokat) \cite{xiao2024florence}.
+
+Amikor a látó- és nyelvi kódolók feldolgozzák a patkány képét és a szöveget, a dekódoló (decoder) olyan szöveges tokeneket generál, amelyek egy poligon (sokszög) kvantált koordinátáit írják le. Ezeket a szöveges koordinátákat a futtatás során egy utófeldolgozó lépésben geometriailag kell bináris maszkká konvertálni.
+
+Ebből az architekturális döntésből két kritikus limitáció fakad a rágcsálók vizsgálata során:
+\begin{itemize}
+    \item \textbf{Felbontás és amorf formák:} Mivel a koordináták kvantálva vannak, és a kimenet egy véges számú csúcspontból álló sokszög, a modell elkerülhetetlenül geometriai simítást (smoothing) végez a határokon. Bár ez az eljárás jól működik merev, szabályos formájú objektumok esetén, a rágcsálók rendkívül hajlékony testének, valamint vékony anatómiai részeinek (mint a farok) precíz lekövetésére a poligon-reprezentáció kevésbé alkalmas.
+
+   \item \textbf{A részleges takarás (occlusion) és az amorf formák problémája:} Bár a Florence-2 zárt poligonokkal írja le az objektumokat, a kísérletek során bebizonyosodott, hogy a degenerált maszkok oka nem pusztán a poligon-reprezentáció csúcspontjainak számában rejlik. A tesztek során a generált poligonpontok mesterséges növelése (sűrítése) sem hozott érdemi javulást a szegmentáció minőségében. A hálózat a részleges takarásoknál jellemzően elveszíti a finom részletek fonalát, és kénytelen egy durva, általánosító poligont húzni, amely hibásan magában foglalja a ketrec rácsait és az üres hátteret is.
+\end{itemize}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 \subsection{Segment Anything Model 2 (SAM 2) - Oracle Prompt}
-A Meta által publikált SAM 2 \cite{ravi2024sam2} ezzel szemben egy dedikált, pixelszintű szegmentációs alapmodell, amely beépített memóriamodulja révén képes a videók tér-időbeli (spatiotemporal) feldolgozására.
 
-\textbf{A térbeli prompt szükségessége:} A Florence-2-vel ellentétben a SAM 2 "szemantikailag vak". Nem rendelkezik olyan nyelvi szótárral, amivel értelmezni tudná a "patkány" szót; csupán azt a vizuális koncepciót érti, hogy mi számít "objektumnak" a háttérhez képest. Éppen ezért a működéséhez elengedhetetlen egy térbeli (spatial) ős, amely megmutatja a hálózatnak, hogy pontosan hol keresse a célobjektumot. Ha a modell megkapja a dobozt, a könnyű maszk-dekódolója (mask decoder) extrém pontosságú sűrű maszkot generál.
-Ahhoz, hogy a kísérletben a modell maximális szegmentációs képességeit mérjük a takarások során, az "Oracle Bounding Box" stratégiát alkalmaztuk. Ennek során a modell minden képkockán megkapta a kézzel annotált (ground truth) maszkból kiszámított tökéletes befoglaló dobozt. A modell legnagyobb korlátja tehát az, hogy külső algoritmus vagy emberi interakció (térbeli prompt) nélkül képtelen az automatizált feladatvégzésre.
+A Meta által publikált SAM 2 \cite{ravi2024sam2} egy interaktív, pixelszintű szegmentációs alapmodell, amelyet kifejezetten videós feladatokra és az azzal járó dinamikus kihívások kezelésére terveztek.
 
-\subsection{Grounded-SAM 2: Automatizált promptolás}
-A SAM 2 térbeli prompt-igényének és a szöveges automatizálásnak az ötvözésére egy hibrid rendszert, a Grounded-SAM 2 architektúrát is vizsgáltuk.
-Ez a folyamat két független modell egymásba fűzésére épül. Első lépésként a Grounding DINO \cite{liu2024grounding} nevű, nyelv-vezérelt nyílt halmazú (open-set) objektumdetektor kapja meg a "rat." szöveget. A DINO kimenetként egy befoglaló dobozt generál, amelyet a rendszer automatikusan továbbít a SAM 2 modellnek. A SAM 2 ezután a kapott doboz alapján elkészíti a végső szegmentációs maszkot.
+\textbf{Kiképzési adathalmaz (SA-V):} A modell robusztussága a felhasznált betanító adatokból ered. A fejlesztők emberi annotátorok bevonásával hozták létre az SA-V (Segment Anything Video) adathalmazt, amely 50,9 ezer videón 35,5 millió maszkot tartalmaz \cite{ravi2024sam2}. A hagyományos szegmentációs adathalmazokkal ellentétben az annotálás osztályfüggetlen (class-agnostic) volt. Az annotátorok feladata nem előre definiált kategóriák, hanem bármely felismerhető tárgy vagy testrész megjelölése volt \cite{ravi2024sam2}. Ez a stratégia teszi a modellt rendkívül pontossá a kis méretű, ideiglenesen takarásba kerülő, majd újra megjelenő objektumok (jelen esetben a rágcsálók testrészeinek) követésében.
 
-\textbf{Korlátok:} Egy ilyen csővezeték (pipeline) pontossága mindig a leggyengébb láncszemen múlik. Hiába képes a SAM 2 tökéletes szegmentálásra, ha a Grounding DINO az a változó kontrasztú, tárgyakkal teli ketrecben részleges takarás miatt nem ismeri fel a rágcsálót, vagy túl tág dobozt rajzol köré, a SAM 2 elkerülhetetlenül a hibás területet fogja szegmentálni.
+\textbf{Interaktív promptolás és Maszkletek:} A SAM 2 vizuális promptokkal irányítható: a felhasználó pozitív és negatív pontokkal (kattintásokkal) vagy befoglaló dobozokkal (bounding box) jelölheti ki a célobjektumot. Ha az első képkockán a kijelölés megtörtént, a modell ezt a maszkot végigpropagálja a videón, és egy folyamatos tér-időbeli "maszkletet" (masklet) hoz létre \cite{ravi2024sam2}. A kutatásban a modell maximális képességeinek mérésére az "Oracle Bounding Box" stratégiát alkalmaztuk: a modell minden képkockán megkapta a ground truth maszkból számított tökéletes befoglaló dobozt, így feladata a dobozon belüli hajszálpontos pixel-szegmentáció maradt.
 
-\section{Adat-előkészítés és adathalmaz}
-A kísérletekhez felhasznált adathalmaz három laboratóriumi videófelvételből (mp4 formátum) és a hozzájuk tartozó, CVAT szoftverrel készített XML annotációkból épült fel. A redundancia elkerülése érdekében az egymást követő képkockákat egy szűrőalgoritmuson engedtük át: ha két egymást követő annotált maszk közötti átfedés (IoU) meghaladta a 0.8-as küszöbértéket, a képkocka eldobásra került.
+\textbf{A memóriabank (Memory Bank) működése:} A SAM 2 legfőbb innovációja a beépített memóriamodul. (Amennyiben a modellt statikus képekre alkalmazzuk, ez a memória üres marad.) Videók esetében a memóriabank egy FIFO (First-In-First-Out) sorban tárolja a célobjektum múltbeli állapotait és a korábbi interakciókat \cite{ravi2024sam2}.
 
-A szűrt adathalmazt az Albumentations könyvtár segítségével augmentáltuk. A képek és a hozzájuk tartozó maszkok 1:1 arányban (AUGMENT\_MULTIPLIER = 1) estek át geometriai (tükrözés, forgatás, skálázás) és képpont-szintű (fényerő-kontraszt változtatás, Gauss-zaj) transzformációkon. A képeket egységesen 1024x1024 pixeles felbontásra méreteztük és kereteztük (padding). A végleges, kiértékelésre szánt teszthalmaz így 306 darab kép-maszk párból állt.
+A memóriabank kétféle információt tart nyilván: maximum $N$ darab legutóbbi (prompt nélküli) képkocka emlékét, valamint maximum $M$ darab promptolt (felhasználó által módosított) képkocka emlékét \cite{ravi2024sam2}. Az emlékképek két formában tárolódnak a hálózatban:
+\begin{itemize}
+    \item \textbf{Térbeli jellemzőtérképek (Spatial feature maps):} A vizuális részletek megőrzésére.
+    \item \textbf{Objektum mutatók (Object pointers):} Könnyűsúlyú vektorok, amelyek a maszk-dekódoló kimenetéből származnak, és a szegmentálandó objektum magas szintű, szemantikai információit tartalmazzák \cite{ravi2024sam2}.
+\end{itemize}
 
-\section{Futtatási környezet}
-A transzformer modellek futtatása és kiértékelése (inferencia) egy felhőalapú Kaggle környezetben történt. A hardveres gyorsítást két darab NVIDIA Tesla T4 grafikus feldolgozóegység (GPU) biztosította. Az algoritmusok implementációja Python nyelven, a PyTorch mélytanulási keretrendszer és a Hugging Face Transformers könyvtár (4.44.2 verzió) alkalmazásával készült.
+A hálózat önfigyelmi mechanizmusa (memory attention) mind a térbeli memóriára, mind az objektum mutatókra kiterjed. Különleges architekturális döntés, hogy a modell időbeli pozicionális kódolást (temporal position information) kizárólag az $N$ darab legutóbbi képkocka emlékébe ágyaz be a rövid távú mozgás lekövetése érdekében \cite{ravi2024sam2}. A promptolt képkockák memóriája nem kap időbeli kódolást, mivel ezek a betanítás során ritkábban fordulnak elő, és az időbeli rögzítés rontaná a modell általánosító képességét (generalization) a hosszan elnyúló videók inferenciája során \cite{ravi2024sam2}. Ez a mechanizmus teszi képessé a modellt arra, hogy egy ketrecrács mögött eltűnő patkányt a korábban eltárolt vizuális memóriája alapján a takarás után is felismerjen és korrigáljon.
 
+
+
+
+
+
+
+
+
+
+
+
+\subsection{Grounded-SAM 2: Automatizált, szövegvezérelt promptolás}
+
+A SAM 2 kiemelkedő szegmentációs pontossággal rendelkezik, azonban működéséhez elengedhetetlen egy manuális térbeli prompt. A teljesen emberi beavatkozás nélküli munkafolyamat felállítása érdekében egy szöveggel és kifejezésekkel irányítható hibrid architektúrát, a Grounded-SAM 2-t vizsgáltuk.
+
+A láncolat első eleme a Grounding DINO \cite{liu2024grounding}, amely a Florence-2-höz hasonlóan egy kiterjedt látás-nyelvi alapmodell (Vision-Language Foundation Model). Ez a hálózat egy nyílt halmazú (open-set) objektumdetektor, ami a hagyományos, fix kategóriákkal dolgozó detektorok korlátait átlépve képes tetszőleges, célzottan nem tanult osztályok felismerésére is, pusztán a megadott szöveges promptok és a vizuális jellemzők összekapcsolása révén \cite{liu2024grounding}.
+
+\textbf{Szoros modalitás-fúzió (Tight Modality Fusion):} Míg a korábbi modellek a vizuális és szöveges jellemzőket sokszor elkülönítve kezelték, a Grounding DINO egy hagyományos, eredetileg zárt halmazra tervezett detektor architektúráját veszi alapul. Ezt a klasszikus struktúrát három feldolgozási fázisra bontja, és ezek mindegyikében szorosan fuzionálja a nyelvi és képi adatokat, ezáltal alakítva át a modellt egy nyílt halmazú detektorrá \cite{liu2024grounding}. Ez a fúzió három elemen alapul:
+
+\begin{enumerate}
+    \item \textbf{Jellemző-erősítő (Feature enhancer):} A képi és szöveges jellemzők (embeddingek) már a korai rétegekben interakcióba lépnek egy kereszt-figyelmi (cross-attention) mechanizmus révén. A szöveges prompt mintegy szűrőként funkcionálva megnöveli (felerősíti) a promptnak megfelelő képi régiók matematikai súlyát, így a vizuális reprezentáció már a feldolgozás elején "szöveg-tudatossá" válik \cite{liu2024grounding}.
+    \item \textbf{Nyelv-vezérelt lekérdezés-kiválasztás (Language-guided query selection):} A hagyományos detektorok statikus, tanult lekérdezéseivel (queries) szemben a hálózat dinamikusan, a megadott szöveg alapján választja ki azokat a képi jellemzőket, amelyek a legnagyobb szemantikai egyezést mutatják a prompttal. Ez biztosítja, hogy a modell a kezdeti befoglaló dobozokat (bounding boxokat) célzottan a legrelevánsabb területekre helyezze \cite{liu2024grounding}.
+    \item \textbf{Kereszt-modalitású dekódoló (Cross-modality decoder):} A kiválasztott lekérdezések (kezdeti dobozok) finomhangolása egy iteratív folyamat során történik, ahol a modell párhuzamosan vizsgálja a képi kontúrokat és a szöveges jelentést. Ez a fázis felelős a dobozok térbeli koordinátáinak pontosításáért és a végső osztályozási magabiztosság (confidence score) megállapításáért \cite{liu2024grounding}.
+\end{enumerate}
+
+\textbf{A láncolat (Pipeline) logikája és korlátai:} Mivel a Grounding DINO önmagában képtelen a pixelszintű szegmentációs feladatok elvégzésére, kimenetként csupán egy befoglaló dobozt (bounding box) generál a felismert rágcsáló köré. A rendszer ezt a dobozt automatikusan továbbítja a SAM 2 modellnek, amely ez alapján elvégzi a finom szegmentálást. Bár ez a csővezeték kényelmes, emberi beavatkozást és feladatspecifikus finomhangolást nem igénylő automatizálást nyújt, magában hordoz több kritikus limitációt is:
+\begin{itemize}
+    \item \textbf{Téves pozitív találatok (Hallucinációk):} A szerzők maguk is kiemelik, hogy a DINO modell hajlamos téves pozitív (false positive) eredményeket, azaz hallucinációkat produkálni \cite{liu2024grounding}. Ha a DINO a ketrec egy másik elemét (például egy játékot) tévesen patkányként azonosít, a SAM 2 egy tökéletes szegmentációs maszkot fog generálni a hibás objektumról.
+    \item \textbf{Infrakamerás textúrahiány:} A kísérletek során bebizonyosodott, hogy bár a sztenderd CLIP modellek a nyelv-vezérelt detektálás úttörői, az éjszakai IR felvételeken a textúra hiánya és a részleges takarás miatt sokszor képtelenek lokalizálni a patkányt. Bár a Grounding DINO a szoros fúzió miatt lényegesen robusztusabb ezen a téren, a láncolat mégis sebezhető: ha a DINO elveszíti az állatot, a SAM 2 sem kap térbeli promptot.
+    \item \textbf{Megbízhatóság és biztonság:} Ahogy a mélytanulási modellek többsége, az architektúra érzékeny az ellenséges támadásokra (adversarial attacks), kimenetének helyessége garantálhatatlan, és nyílt halmazú detektálási képességei biztonsági kockázatokat is felvetnek \cite{liu2024grounding}. Bár egy laboratóriumi rágcsálókísérletben a biztonsági kockázat minimális, az algoritmikus kiszámíthatatlanság komoly mérnöki kihívás.
+\end{itemize}
+ Egy ilyen csővezeték (pipeline) pontossága mindig a leggyengébb láncszemen múlik.
+
+
+
+
+
+
+
+\chapter{Generális modellek eredményei}
+
+\section{Kísérleti adathalmaz és az értékelés metrikái}
+
+A kutatás specifikus peremfeltételeire a szakirodalomban jelenleg nem áll rendelkezésre megfelelő, előre annotált publikus adathalmaz. Ennek okán a generális modellek empirikus és kvantitatív kiértékelését a később bemutatott, általam annotált és augmentált, 306 kép-maszk párból álló teszthalmazon végeztük el.
+
+A hálózatok szegmentációs teljesítményének objektív összehasonlítására négy különböző, de egymást kiegészítő metrikát alkalmaztunk:
+\begin{itemize}
+    \item \textbf{mIoU (Mean Intersection over Union):} A szegmentáció legelterjedtebb alapmetrikája, amely a prediktált maszk és a valós (ground truth) maszk metszetének és uniójának arányát méri.
+    \item \textbf{Dice-együttható (Dice Score / F1-score):} Hasonló az IoU-hoz, de a metszetet kétszeres súllyal veszi figyelembe. Különösen hasznos a rágcsálók kisebb, vékonyabb testrészeinek (például végtagok, farok) értékelésekor, ahol a fals pozitív hibák kevésbé büntetendők, mint a fals negatívok.
+    \item \textbf{Boundary IoU:} Kifejezetten a maszkok körvonalának (határvonalának) pontosságát méri, a belső pixelek ignorálásával. Részleges takarás esetén kritikus mutató, mert megmutatja, mennyire pontosan követi le az algoritmus a rácsok által okozott éles vágásokat.
+    \item \textbf{Hausdorff távolság (Hausdorff Distance):} A prediktált és a valós maszk körvonalpontjai közötti legnagyobb geometriai távolságot (pixelekben) méri. Ez a mutató a legérzékenyebb a kiugró hibákra (outlierekre).
+\end{itemize}
+
+\section{A zero-shot modellek kvantitatív kiértékelése}
+
+Az előre betanított, zero-shot módon (finomhangolás nélkül) tesztelt modellek eredményeit az \ref{tab:zero_shot_results}. táblázat foglalja össze.
+\begin{table}[hbt!]
+\centering
+\caption{A vizsgált zero-shot modellek kvantitatív összehasonlítása az etológiai adathalmazon}
+
+
+\label{tab:zero_shot_results}
+\begin{tabular}{lrrrr}
+\hline
+\textbf{Modell} & \textbf{mIoU} & \textbf{Dice Score} & \textbf{Boundary IoU} & \textbf{Hausdorff Távolság (px)} \\
+\hline
+Florence-2 & 0.4182 & 0.5323 & 0.1666 & 176.9166 \\
+Grounded-SAM 2 & 0.3976 & 0.4733 & 0.1646 & 76.2678 \\
+SAM 2 (Oracle) & 0.6091 & 0.7346 & 0.2606 & 45.0559 \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Az eredmények elemzése és a degenerált maszkok problémája}
+
+A kapott mérési eredmények tökéletesen tükrözik a 4. fejezetben felvázolt architekturális sajátosságokat és korlátokat.
+
+Kiemelkedő, de mesterséges teljesítményt nyújtott a \textbf{SAM 2 (Oracle)} felállás. A 0.6091-es mIoU és a kifejezetten alacsony, 45 pixeles Hausdorff távolság bizonyítja, hogy a SAM 2 maszk-dekódolója vizuálisan rendkívül robusztus. Mivel azonban ez emberi beavatkozást igényel a ennek gyakorlati eredménye pontatlanabb, és a gyakorlatban nem skálázható.
+
+A teljesen automatizált láncolat, a \textbf{Grounded-SAM 2} érte el a leggyengébb átfedési mutatókat (mIoU: 0.3976).
+
+A \textbf{Florence-2} teljesítménye rávilágít a szekvencia-alapú (poligon) maszkgenerálás veszélyeire a biológiai adatoknál. Bár az átfedése marginálisan jobb volt (mIoU: 0.4182), mint a Grounded-SAM 2-nek, a modell \textbf{Hausdorff távolsága extrém magasra, 176.9 pixelre ugrott}. A manuális vizuális ellenőrzések és a futtatási naplók bizonyítják, hogy ez az érték a degenerált maszkok megjelenésének köszönhető.
+
+Az eredmények egyértelműen rámutatnak a kutatás elsődleges konklúziójára: a vizsgált zero-shot alapmodellek önmagukban, utólagos módosítás nélkül nem képesek megbízhatóan és teljesen automatizáltan megoldani a rágcsáló-szegmentálást egy ilyen specifikus környezetben.
+
+
+
+
+
+
+
+
+
+
+
+
+
+\section{Adat-előkészítés és a CVAT annotációs folyamat}
+A kísérletekhez felhasznált alap adathalmaz három laboratóriumi videófelvételből (mp4 formátum) és a hozzájuk tartozó XML annotációkból épült fel. A betanításhoz és kiértékeléshez a videókból kinyert képkockákat (frame-eket) és az XML koordináták alapján generált bináris maszkokat használtuk.
+
+\textbf{Az annotációs folyamat kihívásai és a "Corner Bias":}
+Az adatbázis előállítását kezdetben a CVAT szoftver automatizált, poligon-követő (polygon tracking) funkciójával kíséreltük meg. Ennek az eszköznek a logikája, hogy a felhasználó csupán bizonyos kulcsképkockákon (key frame) annotál, az algoritmus pedig a köztes képkockákon egy merev test modellt feltételezve interpolálja és propagálja a maszkot. A rágcsálók folyamatosan változó sebességű, komplex és rendkívül rugalmas (amorf) mozdulatai miatt azonban ez az eszköz elégtelen precizitással működött, így szinte minden képkockán manuális korrekcióra volt szükség.
+
+Továbbá a szekvenciális videóannotálás során készült kisebb adatbázis természetéből adódóan túltanuláshoz (overfitting) vezet. Ez az isemétlődő mozdulatok, hasonló testtartás és egyező ketrecben elfoglalt térbeli pozíciójának eredménye. Célszerűbb, ha csak az új információt tartalmazó képek legprecízebb annotációjára fordítjuk a figyelmünket. Fontos ezeknek az egyensúlya is, ha a modell csak a sarokban látja a patkányt, akkor mi magunk torzítjuk el a súlyokat és a máshol elhelyezkedő találatokat drasztikusan romló pontossággal szegmentálja majd. Tehát a cél, hogy minden célfeladatra tudjunk változatos példákat biztosítani megfelelő arányban. A tanító adatbázisba jelentős arányba kerültek képek üres ketrecekről és ezek augmentált változataiból is.
+
+\textbf{Adatszűrés és augmentáció:}
+Ezekből az okokból kifolyólag csak a változatos, egyedi testpozíciók és a részleges takarások legmagasabb precizitású, manuális szegmentálására fókuszáltam. A már meglévő videós szekvenciákból a redundancia elkerülése érdekében egy saját szűrőalgoritmust alkalmaztam. A rendszer kiszámítotja a maszkok közötti globális átfedést, és ha két vizsgált maszk közötti hasonlóság (IoU) meghaladta a 0.8-as küszöbértéket, a képkocka eldobásra került.
+
+A szűrt, változatos pozíciókat tartalmazó adathalmazt az Albumentations könyvtár segítségével augmentáltuk. A képek és a maszkok 1:1 arányban (AUGMENT\_MULTIPLIER = 1) estek át geometriai (tükrözés, forgatás, skálázás) és képpont-szintű (fényerő-kontraszt változtatás, Gauss-zaj) transzformációkon. Ez a megközelítés sokkal hatékonyabb módja a robusztus adathalmaz létrehozásának, mintha a polygon tracking több ezer redundáns képkockájával terhelnénk a háttértárat, ráadásul az augmentáció futásidőben (on-the-fly) is elvégezhető. A képeket egységesen 1024x1024 pixeles felbontásra méreteztük és kereteztük (padding). A végleges teszthalmaz így 306 darab nagy értékű, változatos kép-maszk párból állt.
 \newpage
-\chapter{Eredmények és Finomhangolás}
-% TODO: Present empirical and quantitative results, details of fine-tuning, and performance improvements.
+
+
+
+
+
+
+\chapter{Finomhangolás és Feladatspecifikus Modellek}
+
+A teljesen automatizált, emberi beavatkozást nem igénylő és robusztus szegmentációs munkafolyamat eléréséhez elengedhetetlen egy olyan modell bevezetése, amely közvetlenül az etológiai adathalmazon nyeri el a végső súlyozását (finomhangolás / fine-tuning). Erre a célra a SegFormer architektúrát választottam.
+
+\section{A SegFormer architektúra elméleti háttere}
+A SegFormer egy tisztán térbeli feldolgozást végző, szemantikus szegmentációra optimalizált hálózat. A korábban vizsgált alapmodellekkel ellentétben ez az architektúra nem egy többcélú generalista keretrendszer, hanem kifejezetten egyetlen feladatot lát el maximális hatékonysággal: a bemeneti képet pixelszintű osztálypredikcióra (per-pixel category prediction) bontja le \cite{xie2021segformer}.
+
+A SegFormer sikerének kulcsa, hogy a transzformerek globális kontextus-megértését ötvözi egy végtelenül leegyszerűsített dekódolóval \cite{xie2021segformer}. Az architektúra két fő pillérre épül:
+
+\begin{itemize}
+    \item \textbf{Hierarchikus Transzformer Kódoló (Hierarchical Transformer Encoder):} A klasszikus ViT modellek egyetlen fix felbontású patch-rácsra bontják a képet, és azt tartják meg a feldolgozás során. A SegFormer ezzel szemben egy többléptékű (multi-scale) megközelítést alkalmaz: a mélyebb rétegek felé haladva folyamatosan csökkenti a felbontást, miközben növeli a kinyert jellemzők komplexitását \cite{xie2021segformer}. Az egyik legfontosabb architekturális újítása azonban a \textit{pozicionális kódolás elhagyása (positional-encoding-free design)}. Ez a tulajdonság biztosítja a modell felbontásfüggetlenségét: a kódoló nem merev koordinátákat tanul meg, így könnyedén adaptálódik a tanításitól eltérő felbontású képekhez anélkül, hogy a maszkok minősége romlana \cite{xie2021segformer}.
+
+    \item \textbf{Könnyűsúlyú MLP Dekódoló (Lightweight All-MLP Decoder):} A legtöbb modern szegmentációs hálózat kifejezetten "nehézsúlyú", számításigényes transzformer vagy konvolúciós dekódolókat használ. A SegFormer tervezési filozófiája ezzel szemben az, hogy a kódoló rétegei eleve annyira erős és széleskörű térbeli jellemzőket állítanak elő, hogy a maszk visszaállításához nincs szükség komplex dekódolóra \cite{xie2021segformer}. Helyette egy egyszerű, többrétegű perceptronokból (MLP - Multilayer Perceptron) álló hálózatot alkalmaz. Ez a könnyűsúlyú dekódoló csupán összefűzi a különböző léptékű jellemzőtérképeket, majd ebből állítja elő a végső szegmentációs maszkot, ami memóriahatékony és rendkívül gyors működést eredményez \cite{xie2021segformer}.
+\end{itemize}
+
+\section{Modellválasztás és kísérleti felállások}
+A finomhangolás (fine-tuning) során több modellméretet és veszteségfüggvényt is megvizsgáltunk a leghatékonyabb konfiguráció megtalálása érdekében.
+
+\textbf{Modellméret és felbontás (B3 vs. B5):} A kísérletek során összehasonlításra került a közepes méretű \texttt{nvidia/mit-b3} és a lényegesen nagyobb paraméterszámú \texttt{nvidia/mit-b5} kódoló. Az eredmények azt mutatták, hogy a rendelkezésre álló, viszonylag kisméretű betanító adathalmaz miatt a nagyobb (B5) modell nem hozott szignifikáns minőségbeli javulást.% Ezzel szemben a memóriakövetelményei miatt a B5 modell esetében a bemeneti képek felbontását csökkenteni kellett (512x512 pixelre). Mivel a rágcsáló farka és fülei rendkívül finom térbeli részleteket alkotnak, a natív 1024x1024 pixeles bemenet megtartása kritikusabbnak bizonyult a paraméterszámnál. Ennek megfelelően a végleges architektúra alapjául a SegFormer B3 verziója szolgált. ??? KELLENEK A SZÁMOK
+
+\textbf{Veszteségfüggvények (weighted BCE vs. Dice):} A szegmentációs pontosság növelése érdekében teszteltem a hagyományos súlyozott Bináris Keresztentrópia (BCE) és a kifejezetten a maszkok átfedésére fókuszáló Dice veszteségfüggvényeket. A vizuális (kvalitatív) kiértékelés során nem volt megfigyelhető drasztikus különbség a generált maszkok minőségében, így a stabilabb konvergenciát biztosító, súlyozott BCE veszteségfüggvény maradt a munkafolyamat alapja.
+
+\section{A betanítás (Fine-tuning) hiperparaméterei}
+A kiválasztott SegFormer B3 modell finomhangolása a Kaggle felhőkörnyezetben, NVIDIA Tesla T4 grafikus kártyákon történt. A betanítást az alábbi hiperparaméterekkel végeztük:
+\begin{itemize}
+    \item \textbf{Optimalizáló és tanulási ráta:} AdamW optimalizálót alkalmaztunk, $6 \times 10^{-5}$ értékű kezdeti tanulási rátával (learning rate).
+    \item \textbf{Tanítási ciklusok (Epochs):} A modell összesen 30 epochon keresztül tanult.
+    \item \textbf{Kötegelt feldolgozás (Batch size \& Gradient Accumulation):} A magas (1024x1024) felbontás miatti hardveres korlátok áthidalására a \textit{batch size} értékét 1-re csökkentettük, amelyet 16-os gradiens akkumulációval (gradient accumulation) egészítettünk ki, így biztosítva a stabil tanulást és a memóriakorlátok betartását.
+\end{itemize}
+
+\section{A kétlépcsős (Cascaded) "Nagyító" Architektúra}
+Bár az alapszintű SegFormer robusztusan ismerte fel az állatot, a maszkok körvonalai a nagy felbontású, de globális nézet miatt esetenként nem voltak elég feszesek. Ezen probléma orvoslására a kétlépcsős, kaszkádolt (coarse-to-fine) rendszert alakítottunk ki.
+
+A rendszer két független SegFormer modellt integrál:
+\begin{enumerate}
+    \item \textbf{Globális Lokalizációs Modell (Stage 1):} Az első hálózat a teljes (1024x1024) felvételt kapja meg bemenetként. Elsődleges feladata nem a tökéletes maszkolás, hanem a rágcsáló biztonságos lokalizálása a ketrecben. A prediktált maszk alapján a rendszer kiszámít egy befoglaló dobozt (bounding box).
+    \item \textbf{Lokális Szakértői Modell (Stage 2):} Az eredeti képből a befoglaló doboz alapján kivágjuk (crop) a rágcsálót. Ezt a szorosan vágott, kizárólag a patkányt tartalmazó képrészletet kapja meg a második, kifejezetten erre a "nagyított" nézetre finomhangolt (expert) modell.
+\end{enumerate}
+
+\textbf{Kvalitatív értékelés:}
 
 \newpage
 \chapter{Következtetés}
@@ -380,7 +594,19 @@ A transzformer modellek futtatása és kiértékelése (inferencia) egy felhőal
   date={2024}
 }
 
-
+\bib{xie2021segformer}{article}{
+  author={Xie, Enze},
+  author={Wang, Wenhai},
+  author={Yu, Zhiding},
+  author={Anandkumar, Anima},
+  author={Alvarez, Jose M.},
+  author={Luo, Ping},
+  title={SegFormer: Simple and Efficient Design for Semantic Segmentation with Transformers},
+  journal={Advances in Neural Information Processing Systems},
+  volume={34},
+  pages={12077--12090},
+  date={2021}
+}
 
 \end{biblist}
 \end{bibdiv}
