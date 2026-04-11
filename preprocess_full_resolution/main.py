@@ -36,7 +36,7 @@ def main():
         sys.exit(1)
 
     print("\n=== PIPELINE FINISHED ===")
-    print("Data is ready in '../dataset/processed'")
+    print("Data is ready in: dataset/train/  dataset/val/  dataset/test/")
 
 
 if __name__ == "__main__":

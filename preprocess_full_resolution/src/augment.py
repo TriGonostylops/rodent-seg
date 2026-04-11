@@ -1,15 +1,74 @@
 import cv2
-import shutil
+import math
 import random
 import numpy as np
 import albumentations as A
+from collections import defaultdict
+from pathlib import Path
 from tqdm import tqdm
-from src.config import FILTERED_DIR, PROCESSED_DIR, AUGMENT_MULTIPLIER, AUGMENTATION_SEED, AUG_PROBS, TARGET_SIZE
 
-from src.extract_masks import setup_directories, prepare_stage
+from src.config import (
+    DATA_SAMPLES, FILTERED_DIR,
+    TRAIN_DIR, VAL_DIR, TEST_DIR,
+    BASE_AUGMENT_MULTIPLIER, AUGMENTATION_SEED, AUG_PROBS, TARGET_SIZE,
+    parse_video_stem,
+)
+from src.extract_masks import setup_directories
+
+# Map video stem → split (the only field still stored in config per entry).
+_STEM_TO_SPLIT = {Path(e["video"]).stem: e["split"] for e in DATA_SAMPLES}
+
+SPLIT_DIRS = {
+    "train": TRAIN_DIR,
+    "val":   VAL_DIR,
+    "test":  TEST_DIR,
+}
 
 
-def get_augmentor():
+def get_meta_for_file(img_path: Path) -> dict | None:
+    """
+    Resolve a frame filename back to its full metadata.
+    Split comes from config; camera/rat_type/time are parsed from the video stem.
+    Returns None if the file cannot be matched to any config entry.
+    """
+    for video_stem, split in _STEM_TO_SPLIT.items():
+        if img_path.stem.startswith(video_stem):
+            parsed = parse_video_stem(video_stem)  # always valid — checked at import
+            return {**parsed, "split": split}
+    return None
+
+
+def compute_multipliers(train_files: list[Path], base: int) -> dict[str, int]:
+    """
+    Count training frames per rat_type, then assign augmentation multipliers
+    so that after augmentation every class has roughly the same number of frames.
+
+    majority class  → base copies
+    minority class  → ceil(majority_count / minority_count) * base copies
+    """
+    counts: dict[str, int] = defaultdict(int)
+    for f in train_files:
+        meta = get_meta_for_file(f)
+        if meta:
+            counts[meta["rat_type"]] += 1
+
+    if not counts:
+        return {}
+
+    max_count = max(counts.values())
+    multipliers = {
+        rat_type: math.ceil(max_count / cnt) * base
+        for rat_type, cnt in counts.items()
+    }
+
+    print("  Class distribution (training):")
+    for rat_type, cnt in counts.items():
+        print(f"    {rat_type}: {cnt} frames → {multipliers[rat_type]} augmented copies each")
+
+    return multipliers
+
+
+def get_augmentor() -> A.Compose:
     return A.Compose([
         A.HorizontalFlip(p=AUG_PROBS["horizontal_flip"]),
         A.VerticalFlip(p=AUG_PROBS["vertical_flip"]),
@@ -17,58 +76,99 @@ def get_augmentor():
             translate_percent={"x": (-0.1, 0.1), "y": (-0.1, 0.1)},
             scale=(0.8, 1.2),
             rotate=(-15, 15),
-            p=AUG_PROBS["shift_scale_rotate"]
+            p=AUG_PROBS["shift_scale_rotate"],
         ),
         A.RandomBrightnessContrast(p=AUG_PROBS["random_brightness_contrast"]),
-        A.HueSaturationValue(hue_shift_limit=20, sat_shift_limit=30, val_shift_limit=20, p=AUG_PROBS.get("hue_saturation", 0.3)),
+        A.HueSaturationValue(
+            hue_shift_limit=20, sat_shift_limit=30, val_shift_limit=20,
+            p=AUG_PROBS.get("hue_saturation", 0.3),
+        ),
         A.GaussNoise(std_range=(0.1, 0.3), p=AUG_PROBS.get("gauss_noise", 0.2)),
         A.LongestMaxSize(max_size=TARGET_SIZE),
         A.PadIfNeeded(min_height=TARGET_SIZE, min_width=TARGET_SIZE, border_mode=cv2.BORDER_CONSTANT),
     ], is_check_shapes=False)
 
 
+def get_resizer() -> A.Compose:
+    return A.Compose([
+        A.LongestMaxSize(max_size=TARGET_SIZE),
+        A.PadIfNeeded(min_height=TARGET_SIZE, min_width=TARGET_SIZE, border_mode=cv2.BORDER_CONSTANT),
+    ], is_check_shapes=False)
+
+
 def run_augmentation():
-    print(f"--- STEP 3: AUGMENTATION & RESIZING ---")
+    print("--- STEP 3: AUGMENTATION & RESIZING ---")
 
     if AUGMENTATION_SEED is not None:
         random.seed(AUGMENTATION_SEED)
         np.random.seed(AUGMENTATION_SEED)
 
-    img_files, in_mask_dir, out_img_dir, out_mask_dir = prepare_stage(FILTERED_DIR, PROCESSED_DIR)
+    in_img_dir  = FILTERED_DIR / "images"
+    in_mask_dir = FILTERED_DIR / "masks"
+    if not in_img_dir.exists():
+        raise FileNotFoundError(f"Filtered data not found at {FILTERED_DIR}. Run step 2 first.")
+    img_files = sorted(in_img_dir.glob("*.jpg"))
 
-    print(f"Processing {len(img_files)} frames (Multiplier: {AUGMENT_MULTIPLIER})...")
+    # Group files by their split
+    split_files: dict[str, list[Path]] = defaultdict(list)
+    unknown = []
+    for f in img_files:
+        meta = get_meta_for_file(f)
+        if meta:
+            split_files[meta["split"]].append(f)
+        else:
+            unknown.append(f)
+
+    if unknown:
+        print(f"  WARNING: {len(unknown)} file(s) could not be matched to a DATA_SAMPLES entry — skipped.")
+
+    # Compute per-rat_type augmentation multipliers from training set
+    multipliers = compute_multipliers(split_files.get("train", []), BASE_AUGMENT_MULTIPLIER)
 
     augmentor = get_augmentor()
-    # Simple resizer for original images if they don't meet target size
-    resizer = A.Compose([
-        A.LongestMaxSize(max_size=TARGET_SIZE),
-        A.PadIfNeeded(min_height=TARGET_SIZE, min_width=TARGET_SIZE, border_mode=cv2.BORDER_CONSTANT),
-    ], is_check_shapes=False)
+    resizer   = get_resizer()
 
-    count = 0
+    total_written = 0
 
-    for img_path in tqdm(img_files, desc="Augmenting"):
-        mask_path = in_mask_dir / f"{img_path.stem}.png"
-        image = cv2.imread(str(img_path))
-        mask = cv2.imread(str(mask_path), cv2.IMREAD_GRAYSCALE)
-
-        if image is None or mask is None:
+    for split, files in split_files.items():
+        if not files:
             continue
 
-        base_name = img_path.stem
+        out_dir = SPLIT_DIRS.get(split)
+        if out_dir is None:
+            print(f"  WARNING: unknown split '{split}', skipping {len(files)} file(s).")
+            continue
 
-        # Save resized original
-        resized = resizer(image=image, mask=mask)
-        cv2.imwrite(str(out_img_dir / f"{base_name}.jpg"), resized['image'])
-        cv2.imwrite(str(out_mask_dir / f"{base_name}.png"), resized['mask'])
+        out_img_dir, out_mask_dir, _ = setup_directories(out_dir, wipe=True)
+        print(f"  Processing [{split}]: {len(files)} source frames → {out_dir}")
 
-        # Generate multiple augmentations
-        for i in range(AUGMENT_MULTIPLIER):
-            suffix = f"_aug_{i}" if AUGMENT_MULTIPLIER > 1 else "_aug"
-            aug = augmentor(image=image, mask=mask)
-            cv2.imwrite(str(out_img_dir / f"{base_name}{suffix}.jpg"), aug['image'])
-            cv2.imwrite(str(out_mask_dir / f"{base_name}{suffix}.png"), aug['mask'])
+        for img_path in tqdm(files, desc=f"[{split}]"):
+            mask_path = in_mask_dir / f"{img_path.stem}.png"
+            image = cv2.imread(str(img_path))
+            mask  = cv2.imread(str(mask_path), cv2.IMREAD_GRAYSCALE)
 
-        count += 1
+            if image is None or mask is None:
+                continue
 
-    print(f"Step 3 Complete. Final Dataset ready in: {PROCESSED_DIR}")
+            # Always save the resized original
+            resized = resizer(image=image, mask=mask)
+            cv2.imwrite(str(out_img_dir / f"{img_path.stem}.jpg"), resized["image"])
+            cv2.imwrite(str(out_mask_dir / f"{img_path.stem}.png"), resized["mask"])
+            total_written += 1
+
+            # Augmentation only for training frames
+            if split == "train":
+                meta  = get_meta_for_file(img_path)
+                n_aug = multipliers.get(meta["rat_type"], BASE_AUGMENT_MULTIPLIER) if meta else BASE_AUGMENT_MULTIPLIER
+                for i in range(n_aug):
+                    aug = augmentor(image=image, mask=mask)
+                    cv2.imwrite(str(out_img_dir / f"{img_path.stem}_aug_{i}.jpg"), aug["image"])
+                    cv2.imwrite(str(out_mask_dir / f"{img_path.stem}_aug_{i}.png"), aug["mask"])
+                    total_written += 1
+
+    print(f"Step 3 Complete. Total frames written: {total_written}")
+    for split, out_dir in SPLIT_DIRS.items():
+        img_dir = out_dir / "images"
+        if img_dir.exists():
+            n = len(list(img_dir.glob("*.jpg")))
+            print(f"  dataset/{split}/images: {n} files")

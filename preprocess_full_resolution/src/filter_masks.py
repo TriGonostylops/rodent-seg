@@ -21,13 +21,18 @@ def calculate_iou(mask1, mask2):
 def run_filtering():
     print(f"--- STEP 2: FILTERING (IoU < {IOU_THRESHOLD}) ---")
 
-    img_files, in_mask_dir, out_img_dir, out_mask_dir = prepare_stage(INTERIM_DIR, FILTERED_DIR)
+    img_files, in_mask_dir, out_img_dir, out_mask_dir = prepare_stage(INTERIM_DIR, FILTERED_DIR, wipe=True)
 
     last_saved_mask = None
+    current_prefix = None
     kept_count = 0
     dropped_count = 0
 
     for img_path in tqdm(img_files, desc="Filtering"):
+        prefix = img_path.stem.rsplit('_frame_', 1)[0]
+        if prefix != current_prefix:
+            last_saved_mask = None
+            current_prefix = prefix
         mask_path = in_mask_dir / f"{img_path.stem}.png"
         mask = cv2.imread(str(mask_path), cv2.IMREAD_GRAYSCALE)
 
