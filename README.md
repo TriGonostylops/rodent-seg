@@ -127,6 +127,31 @@ After step 2 the pipeline prints a 3×3 grid showing where mask centroids fall a
 
 ---
 
+## Reading the compactness histogram
+
+Immediately after the spatial heatmap, step 2 prints a compactness distribution.
+Compactness = `mask_area / bounding_box_area` — how much of the rat's bounding box is actually filled by the rat.
+
+```
+  Compactness distribution — mask_area / bounding_box_area (67 frames):
+  Low = extended/active   High = compact/stationary
+
+  0.0–0.2                          0 ( 0.0%)  very extended
+  0.2–0.4  ████████████████████   28 (41.8%)  extended
+  0.4–0.6  ████████████████████   31 (46.3%)  mixed
+  0.6–0.8  ████                    7 (10.4%)  compact
+  0.8–1.0                          1 ( 1.5%)  very compact
+```
+
+- **Low bins (0.0–0.4):** rat is elongated — running, jumping, stretching
+- **High bins (0.6–1.0):** rat is a compact blob — sitting, grooming, sleeping
+- A `WARNING` prints if >60% of frames are compact (stationary-heavy dataset)
+- A `WARNING` prints if <15% of frames are extended (no active poses)
+
+**Note:** the IoU filter (step 2) naturally biases the surviving frames toward active poses — a stationary rat produces near-identical consecutive masks, which get dropped. So a healthy compactness distribution is partly an emergent consequence of the IoU threshold, not just annotation quality.
+
+---
+
 ## Augmentation balancing
 
 Training frames are augmented per `rat_type`. The multiplier for each class is:
