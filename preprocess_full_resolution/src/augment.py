@@ -10,7 +10,7 @@ from tqdm import tqdm
 from src.config import (
     DATA_SAMPLES, FILTERED_DIR,
     TRAIN_DIR, VAL_DIR, TEST_DIR,
-    BASE_AUGMENT_MULTIPLIER, AUGMENTATION_SEED, AUG_PROBS, TARGET_SIZE,
+    BASE_AUGMENT_MULTIPLIER, MAX_AUGMENT_MULTIPLIER, AUGMENTATION_SEED, AUG_PROBS, TARGET_SIZE,
     parse_video_stem,
 )
 from src.extract_masks import setup_directories
@@ -57,13 +57,16 @@ def compute_multipliers(train_files: list[Path], base: int) -> dict[str, int]:
 
     max_count = max(counts.values())
     multipliers = {
-        rat_type: math.ceil(max_count / cnt) * base
+        rat_type: min(math.ceil(max_count / cnt) * base, MAX_AUGMENT_MULTIPLIER)
         for rat_type, cnt in counts.items()
     }
 
     print("  Class distribution (training):")
     for rat_type, cnt in counts.items():
-        print(f"    {rat_type}: {cnt} frames → {multipliers[rat_type]} augmented copies each")
+        raw = math.ceil(max_count / cnt) * base
+        capped = multipliers[rat_type]
+        cap_note = f" (capped from {raw})" if capped < raw else ""
+        print(f"    {rat_type}: {cnt} frames → {capped} augmented copies each{cap_note}")
 
     return multipliers
 

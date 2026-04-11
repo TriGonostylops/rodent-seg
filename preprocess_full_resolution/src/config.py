@@ -79,13 +79,17 @@ TRAIN_DIR = OUTPUT_DIR / "train"
 VAL_DIR   = OUTPUT_DIR / "val"
 TEST_DIR  = OUTPUT_DIR / "test"
 
-IOU_THRESHOLD = 0.9
+IOU_THRESHOLD = 0.5
 TARGET_SIZE   = 1024
 
 # Base augmented copies per training frame before class-balance scaling.
 # Majority class → BASE copies. Minority class → ceil(majority/minority) × BASE copies.
 # Example: 20 albino vs 60 black_white, BASE=6 → albino gets 18, black_white gets 6.
 BASE_AUGMENT_MULTIPLIER = 6
+# Hard cap on augmented copies per frame regardless of class imbalance.
+# Prevents low-diversity minority classes (e.g. albino with ~20 unique poses) from being
+# augmented so heavily that the model learns transform artifacts rather than real variation.
+MAX_AUGMENT_MULTIPLIER = 8
 AUGMENTATION_SEED = 42
 
 AUG_PROBS = {
