@@ -67,6 +67,65 @@ def report_spatial_distribution(kept_mask_paths, grid_rows=3, grid_cols=3):
         print(f"\n  WARNING: cell ({hot[0]},{hot[1]}) holds {hot_pct:.0f}% of frames — possible spatial bias.")
 
 
+def report_compactness(kept_mask_paths):
+    """
+    Print an ASCII histogram of mask compactness (mask_area / bounding_box_area).
+
+    Low compactness  (~0.0–0.4) → elongated/extended rat: running, jumping, stretching
+    High compactness (~0.6–1.0) → compact blob: sitting, grooming, sleeping
+    """
+    BINS = [0.0, 0.2, 0.4, 0.6, 0.8, 1.01]
+    BIN_LABELS = ["0.0–0.2", "0.2–0.4", "0.4–0.6", "0.6–0.8", "0.8–1.0"]
+    BIN_HINTS  = ["very extended", "extended", "mixed", "compact", "very compact"]
+    counts = [0] * (len(BINS) - 1)
+    empty_count = 0
+
+    for mask_path in kept_mask_paths:
+        mask = cv2.imread(str(mask_path), cv2.IMREAD_GRAYSCALE)
+        if mask is None:
+            continue
+        binary = mask > 0
+        ys, xs = np.where(binary)
+        if len(xs) == 0:
+            empty_count += 1
+            continue
+
+        mask_area = binary.sum()
+        bbox_area = (ys.max() - ys.min() + 1) * (xs.max() - xs.min() + 1)
+        compactness = mask_area / bbox_area
+
+        for i in range(len(BINS) - 1):
+            if BINS[i] <= compactness < BINS[i + 1]:
+                counts[i] += 1
+                break
+
+    total = sum(counts)
+    if total == 0:
+        print("  No foreground masks found.")
+        return
+
+    bar_max = 20
+    max_count = max(counts) if max(counts) > 0 else 1
+
+    print(f"\n  Compactness distribution — mask_area / bounding_box_area ({total} frames):")
+    print(f"  Low = extended/active   High = compact/stationary\n")
+    for i, (label, hint) in enumerate(zip(BIN_LABELS, BIN_HINTS)):
+        pct = counts[i] / total * 100
+        bar = "█" * int(counts[i] / max_count * bar_max)
+        print(f"  {label}  {bar:<{bar_max}}  {counts[i]:>3} ({pct:>4.1f}%)  {hint}")
+
+    if empty_count:
+        print(f"  ({empty_count} empty-cage masks excluded)")
+
+    # Warn if over 60% of frames are compact (sitting/grooming heavy)
+    compact_pct = sum(counts[3:]) / total * 100
+    if compact_pct > 60:
+        print(f"\n  WARNING: {compact_pct:.0f}% of frames are compact — dataset may be stationary-heavy.")
+    active_pct = sum(counts[:2]) / total * 100
+    if active_pct < 15:
+        print(f"\n  WARNING: only {active_pct:.0f}% of frames are extended — consider annotating more active poses.")
+
+
 def run_filtering():
     print(f"--- STEP 2: FILTERING (IoU < {IOU_THRESHOLD}) ---")
 
@@ -110,3 +169,4 @@ def run_filtering():
     print(f"Clean data ready in:   {FILTERED_DIR}")
 
     report_spatial_distribution(kept_mask_paths)
+    report_compactness(kept_mask_paths)
