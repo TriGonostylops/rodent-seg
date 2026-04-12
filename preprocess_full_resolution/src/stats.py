@@ -3,7 +3,7 @@ import json
 import numpy as np
 from pathlib import Path
 
-from src.config import STATS_PATH, parse_video_stem
+from src.config import STATS_PATH, TARGET_SIZE, parse_video_stem
 
 _SPATIAL_ROWS  = 3
 _SPATIAL_COLS  = 3
@@ -22,6 +22,7 @@ def compute_camera_stats(camera_stem: str, mask_paths: list[Path], split: str) -
     area_hist        = [0] * (len(_AREA_BINS) - 1)
     area_values      = []
     empty_count      = 0
+    padding_bg_pct   = None  # % of padded frame that is black padding (computed once per camera)
 
     for mask_path in mask_paths:
         mask = cv2.imread(str(mask_path), cv2.IMREAD_GRAYSCALE)
@@ -30,6 +31,15 @@ def compute_camera_stats(camera_stem: str, mask_paths: list[Path], split: str) -
         h, w   = mask.shape
         binary = mask > 0
         ys, xs = np.where(binary)
+
+        # Compute padding ratio once (same for all frames of this camera)
+        if padding_bg_pct is None:
+            scale    = TARGET_SIZE / max(h, w)
+            scaled_h = round(h * scale)
+            scaled_w = round(w * scale)
+            visible_area  = scaled_h * scaled_w
+            padded_area   = TARGET_SIZE * TARGET_SIZE
+            padding_bg_pct = (1.0 - visible_area / padded_area) * 100
 
         if len(xs) == 0:
             empty_count += 1
@@ -51,8 +61,11 @@ def compute_camera_stats(camera_stem: str, mask_paths: list[Path], split: str) -
                 compactness_hist[i] += 1
                 break
 
-        # mask area as % of frame
-        area_pct = mask_area / (h * w) * 100
+        # mask area as % of padded (TARGET_SIZE × TARGET_SIZE) frame.
+        # Raw mask is at original resolution; after LongestMaxSize → PadIfNeeded the
+        # rat shrinks relative to the full canvas, so we correct for that here.
+        scale        = TARGET_SIZE / max(h, w)
+        area_pct     = mask_area * (scale ** 2) / (TARGET_SIZE * TARGET_SIZE) * 100
         area_values.append(area_pct)
         for i in range(len(_AREA_BINS) - 1):
             if _AREA_BINS[i] <= area_pct < _AREA_BINS[i + 1]:
@@ -74,9 +87,10 @@ def compute_camera_stats(camera_stem: str, mask_paths: list[Path], split: str) -
         "spatial_grid":     spatial_grid.tolist(),
         "compactness_hist": compactness_hist,
         "area_pct": {
-            "hist": area_hist,
-            "mean": round(float(np.mean(area_values)), 2) if area_values else 0.0,
-            "std":  round(float(np.std(area_values)),  2) if area_values else 0.0,
+            "hist":        area_hist,
+            "mean":        round(float(np.mean(area_values)), 2) if area_values else 0.0,
+            "std":         round(float(np.std(area_values)),  2) if area_values else 0.0,
+            "padding_bg":  round(padding_bg_pct, 1) if padding_bg_pct is not None else 0.0,
         },
     }
 
@@ -87,6 +101,7 @@ def aggregate_stats(camera_stats_list: list[dict]) -> dict:
     merged_compactness = [0] * 5
     merged_area_hist   = [0] * 5
     area_means, area_stds, area_frames = [], [], []
+    padding_bg_values  = []
     empty = 0
 
     for s in camera_stats_list:
@@ -98,6 +113,7 @@ def aggregate_stats(camera_stats_list: list[dict]) -> dict:
             area_means.append(s["area_pct"]["mean"])
             area_stds.append(s["area_pct"]["std"])
             area_frames.append(n)
+        padding_bg_values.append(s["area_pct"].get("padding_bg", 0.0))
         empty += s["empty_frames"]
 
     if area_frames:
@@ -106,12 +122,20 @@ def aggregate_stats(camera_stats_list: list[dict]) -> dict:
     else:
         w_mean, w_std = 0.0, 0.0
 
+    # Use the max padding across cameras so the warning is conservative
+    max_padding_bg = max(padding_bg_values) if padding_bg_values else 0.0
+
     return {
         "frames":           sum(s["frames"] for s in camera_stats_list),
         "empty_frames":     empty,
         "spatial_grid":     merged_spatial.tolist(),
         "compactness_hist": merged_compactness,
-        "area_pct":         {"hist": merged_area_hist, "mean": round(w_mean, 2), "std": round(w_std, 2)},
+        "area_pct":         {
+            "hist":       merged_area_hist,
+            "mean":       round(w_mean, 2),
+            "std":        round(w_std, 2),
+            "padding_bg": round(max_padding_bg, 1),
+        },
     }
 
 
@@ -187,15 +211,25 @@ def print_compactness_report(stats: dict, label: str):
 def print_area_report(stats: dict, label: str):
     BIN_LABELS = ["0–2%  ", "2–5%  ", "5–10% ", "10–20%", "20%+  "]
     BIN_HINTS  = ["very small", "small", "medium", "large", "very large"]
-    counts = stats["area_pct"]["hist"]
-    total  = sum(counts)
+    counts     = stats["area_pct"]["hist"]
+    total      = sum(counts)
     if total == 0:
         return
 
-    bar_max   = 20
-    max_count = max(counts) if max(counts) > 0 else 1
-    mean, std = stats["area_pct"]["mean"], stats["area_pct"]["std"]
-    print(f"\n  Mask area [{label}] — {total} frames  (rat size as % of frame, mean={mean:.1f}% ±{std:.1f}%)\n")
+    bar_max    = 20
+    max_count  = max(counts) if max(counts) > 0 else 1
+    mean, std  = stats["area_pct"]["mean"], stats["area_pct"]["std"]
+    padding_bg = stats["area_pct"].get("padding_bg", 0.0)
+
+    note = ""
+    if padding_bg > 0:
+        note = f"  (NOTE: {padding_bg:.1f}% of each padded frame is black background from aspect-ratio padding)"
+
+    print(f"\n  Mask area [{label}] — {total} frames  "
+          f"(rat as % of {TARGET_SIZE}×{TARGET_SIZE} padded frame, mean={mean:.1f}% ±{std:.1f}%)")
+    if note:
+        print(f"  {note}")
+    print()
     for i, (lbl, hint) in enumerate(zip(BIN_LABELS, BIN_HINTS)):
         pct = counts[i] / total * 100
         bar = "█" * int(counts[i] / max_count * bar_max)

@@ -59,9 +59,9 @@ DATA_SAMPLES = [
     # --- Train (camera-12 confirmed; camera-5, 10, 11 — add when videos + XMLs arrive) ---
     {"video": "camera-12_black_white_day_1.mp4",  "xml": "camera-12_black_white_day_1.xml",  "split": "train"},
     {"video": "camera-12_black_white_day_2.mp4",  "xml": "camera-12_black_white_day_2.xml",  "split": "train"},
+    {"video": "camera-11_black_white_day_2.mp4",  "xml": "camera-11_black_white_day_2.xml", "split": "train"},
     # {"video": "camera-5_TODO_TODO.mp4",  "xml": "camera-5_TODO_TODO.xml",  "split": "train"},
     # {"video": "camera-10_TODO_TODO.mp4", "xml": "camera-10_TODO_TODO.xml", "split": "train"},
-    # {"video": "camera-11_TODO_TODO.mp4", "xml": "camera-11_TODO_TODO.xml", "split": "train"},
 
     # --- Test — add when videos arrive ---
 ]
