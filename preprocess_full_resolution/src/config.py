@@ -75,9 +75,10 @@ OUTPUT_DIR   = BASE_DIR / "dataset"
 INTERIM_DIR  = OUTPUT_DIR / "interim"
 FILTERED_DIR = OUTPUT_DIR / "interim_filtered"
 
-TRAIN_DIR = OUTPUT_DIR / "train"
-VAL_DIR   = OUTPUT_DIR / "val"
-TEST_DIR  = OUTPUT_DIR / "test"
+TRAIN_DIR  = OUTPUT_DIR / "train"
+VAL_DIR    = OUTPUT_DIR / "val"
+TEST_DIR   = OUTPUT_DIR / "test"
+STATS_PATH = OUTPUT_DIR / "camera_stats.json"
 
 IOU_THRESHOLD = 0.5
 TARGET_SIZE   = 1024
