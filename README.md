@@ -106,24 +106,40 @@ Filenames encode their source: `camera-12_black_white_day_1_frame_000123.jpg`
 
 ## Reading the spatial heatmap
 
-After step 2 the pipeline prints a 3×3 grid showing where mask centroids fall across the frame (top-left = top-left of the camera view):
+After step 2 the pipeline prints a 3×3 grid per split showing where mask centroids fall across the frame (top-left = top-left of the camera view):
 
 ```
+  Spatial distribution [train] — 117 frames  (TOP-LEFT = top-left of frame)
+
   +---------+---------+---------+
-  |   13    |   17    |   10    |
-  |  (19%)  |  (25%)  |  (15%)  |
+  |    0    |   45    |   40    |
+  |  (0%)   |  (38%)  |  (34%)  |
   +---------+---------+---------+
-  |    1    |   11    |    3    |
-  |  (1%)   |  (16%)  |  (4%)   |
+  |    1    |    0    |    3    |
+  |  (1%)   |  (0%)   |  (3%)   |
   +---------+---------+---------+
-  |    4    |    5    |    3    |
-  |  (6%)   |  (7%)   |  (4%)   |
+  |   10    |   12    |    6    |
+  |  (9%)   |  (10%)  |  (5%)   |
+  +---------+---------+---------+
+
+  Spatial distribution [val] — 49 frames  (TOP-LEFT = top-left of frame)
+
+  +---------+---------+---------+
+  |   19    |   12    |    1    |
+  |  (39%)  |  (24%)  |  (2%)   |
+  +---------+---------+---------+
+  |    2    |   13    |    0    |
+  |  (4%)   |  (27%)  |  (0%)   |
+  +---------+---------+---------+
+  |    0    |    2    |    0    |
+  |  (0%)   |  (4%)   |  (0%)   |
   +---------+---------+---------+
 ```
 
-- A `WARNING` prints if any single cell holds more than 40% of frames.
-- Cells at 0% or very low % are where new annotations have the most value.
-- Annotating more frames in already-heavy cells adds redundancy, not diversity.
+- Each split is reported separately — **only the `[train]` report should guide annotation decisions**; val is informational
+- A `WARNING` prints if any single cell holds more than 40% of frames
+- Cells at 0% or very low % in `[train]` are where new annotations have the most value
+- Gaps in `[train]` that reflect real cage behavior (rat never goes there) cannot be fixed by annotation alone
 
 ---
 
@@ -133,14 +149,21 @@ Immediately after the spatial heatmap, step 2 prints a compactness distribution.
 Compactness = `mask_area / bounding_box_area` — how much of the rat's bounding box is actually filled by the rat.
 
 ```
-  Compactness distribution — mask_area / bounding_box_area (67 frames):
-  Low = extended/active   High = compact/stationary
+  Compactness [train] — 117 frames  (low = active/extended, high = stationary/compact)
 
   0.0–0.2                          0 ( 0.0%)  very extended
-  0.2–0.4  ████████████████████   28 (41.8%)  extended
-  0.4–0.6  ████████████████████   31 (46.3%)  mixed
-  0.6–0.8  ████                    7 (10.4%)  compact
-  0.8–1.0                          1 ( 1.5%)  very compact
+  0.2–0.4  ████████████████       43 (36.8%)  extended
+  0.4–0.6  ████████████████████   53 (45.3%)  mixed
+  0.6–0.8  ██████                 16 (13.7%)  compact
+  0.8–1.0  █                       5 ( 4.3%)  very compact
+
+  Compactness [val] — 49 frames  (low = active/extended, high = stationary/compact)
+
+  0.0–0.2                          0 ( 0.0%)  very extended
+  0.2–0.4  ███████████████        19 (38.8%)  extended
+  0.4–0.6  ████████████████████   24 (49.0%)  mixed
+  0.6–0.8  █████                   6 (12.2%)  compact
+  0.8–1.0                          0 ( 0.0%)  very compact
 ```
 
 - **Low bins (0.0–0.4):** rat is elongated — running, jumping, stretching
