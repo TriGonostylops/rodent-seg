@@ -83,6 +83,14 @@ STATS_PATH = OUTPUT_DIR / "camera_stats.json"
 IOU_THRESHOLD = 0.5
 TARGET_SIZE   = 1024
 
+# Set to True to let the pipeline compute the optimal camera→split assignment
+# automatically from camera_stats.json (or from rough estimates on first run).
+# The "split" fields in DATA_SAMPLES are then ignored and overridden at runtime.
+AUTO_SPLIT = False
+
+# Target fraction of frames per split when AUTO_SPLIT is enabled.
+SPLIT_RATIOS = {"train": 0.70, "val": 0.20, "test": 0.10}
+
 # Base augmented copies per training frame before class-balance scaling.
 # Majority class → BASE copies. Minority class → ceil(majority/minority) × BASE copies.
 # Example: 20 albino vs 60 black_white, BASE=6 → albino gets 18, black_white gets 6.

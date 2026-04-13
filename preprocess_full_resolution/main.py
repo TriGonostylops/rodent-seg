@@ -3,6 +3,14 @@ import os
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
+# AUTO_SPLIT must run before filter_masks and augment are imported:
+# both modules compute _STEM_TO_SPLIT at module-level from DATA_SAMPLES,
+# so the split assignments must already be mutated in DATA_SAMPLES by then.
+from src.config import AUTO_SPLIT
+if AUTO_SPLIT:
+    from src.auto_split import apply_auto_split
+    apply_auto_split()
+
 from src import extract_masks
 from src import filter_masks
 from src import augment
