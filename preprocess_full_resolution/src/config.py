@@ -60,8 +60,12 @@ DATA_SAMPLES = [
     {"video": "camera-12_black_white_day_1.mp4",  "xml": "camera-12_black_white_day_1.xml",  "split": "train"},
     {"video": "camera-12_black_white_day_2.mp4",  "xml": "camera-12_black_white_day_2.xml",  "split": "train"},
     {"video": "camera-11_black_white_day_2.mp4",  "xml": "camera-11_black_white_day_2.xml", "split": "train"},
-    # {"video": "camera-5_TODO_TODO.mp4",  "xml": "camera-5_TODO_TODO.xml",  "split": "train"},
-    # {"video": "camera-10_TODO_TODO.mp4", "xml": "camera-10_TODO_TODO.xml", "split": "train"},
+    {"video": "camera-10_black_white_night_1.mp4",  "xml": "camera-10_black_white_night_1.xml", "split": "train"},
+    {"video": "camera-5_albino_day_1.mp4",  "xml": "camera-5_albino_day_1.xml", "split": "train"},
+    {"video": "camera-6_albino_night_1.mp4",  "xml": "camera-6_albino_night_1.xml", "split": "train"},
+    {"video": "camera-4_albino_day_1.mp4",  "xml": "camera-4_albino_day_1.xml", "split": "train"},
+    {"video": "camera-9_black_white_day_1.mp4",  "xml": "camera-9_black_white_day_1.xml", "split": "train"},
+    {"video": "camera-9_black_white_night_2.mp4",  "xml": "camera-9_black_white_night_2.xml", "split": "train"},
 
     # --- Test — add when videos arrive ---
 ]
@@ -80,7 +84,7 @@ VAL_DIR    = OUTPUT_DIR / "val"
 TEST_DIR   = OUTPUT_DIR / "test"
 STATS_PATH = OUTPUT_DIR / "camera_stats.json"
 
-IOU_THRESHOLD = 0.5
+IOU_THRESHOLD = 0.85
 TARGET_SIZE   = 1024
 
 # Set to True to let the pipeline compute the optimal camera→split assignment
@@ -89,6 +93,10 @@ TARGET_SIZE   = 1024
 AUTO_SPLIT = False
 
 # Target fraction of frames per split when AUTO_SPLIT is enabled.
+# train/val are two-sided targets (optimizer tries to hit them exactly).
+# test is a one-sided floor: the optimizer only penalises falling *below* this
+# value, so it naturally assigns the smallest viable camera(s) to test.
+# Raise the floor if you want more test coverage; lower it for fewer test frames.
 SPLIT_RATIOS = {"train": 0.70, "val": 0.20, "test": 0.10}
 
 # Base augmented copies per training frame before class-balance scaling.
