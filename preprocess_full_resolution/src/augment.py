@@ -77,11 +77,12 @@ def get_augmentor() -> A.Compose:
         A.VerticalFlip(p=AUG_PROBS["vertical_flip"]),
         A.Affine(
             translate_percent={"x": (-0.1, 0.1), "y": (-0.1, 0.1)},
-            scale=(0.8, 1.2),
-            rotate=(-15, 15),
+            scale=(0.7, 1.4),
+            rotate=(-90, 90),
             p=AUG_PROBS["shift_scale_rotate"],
         ),
         A.RandomBrightnessContrast(p=AUG_PROBS["random_brightness_contrast"]),
+        A.RandomGamma(gamma_limit=(70, 130), p=AUG_PROBS["random_gamma"]),
         A.HueSaturationValue(
             hue_shift_limit=20, sat_shift_limit=30, val_shift_limit=20,
             p=AUG_PROBS.get("hue_saturation", 0.3),

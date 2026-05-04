@@ -66,6 +66,7 @@ DATA_SAMPLES = [
     {"video": "camera-4_albino_day_1.mp4",  "xml": "camera-4_albino_day_1.xml", "split": "train"},
     {"video": "camera-9_black_white_day_1.mp4",  "xml": "camera-9_black_white_day_1.xml", "split": "train"},
     {"video": "camera-9_black_white_night_2.mp4",  "xml": "camera-9_black_white_night_2.xml", "split": "train"},
+    {"video": "camera-8_black_white_day_2.mp4",  "xml": "camera-8_black_white_day_2.xml", "split": "train"},
 
     # --- Test — add when videos arrive ---
 ]
@@ -110,10 +111,11 @@ MAX_AUGMENT_MULTIPLIER = 8
 AUGMENTATION_SEED = 42
 
 AUG_PROBS = {
-    "horizontal_flip":        0.5,
-    "vertical_flip":          0.1,
-    "shift_scale_rotate":     0.8,
+    "horizontal_flip":            0.5,
+    "vertical_flip":              0.1,
+    "shift_scale_rotate":         0.8,
     "random_brightness_contrast": 0.5,
-    "hue_saturation":         0.3,
-    "gauss_noise":            0.2,
+    "random_gamma":               0.4,
+    "hue_saturation":             0.3,
+    "gauss_noise":                0.2,
 }
