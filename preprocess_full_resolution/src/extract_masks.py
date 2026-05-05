@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 # Cleaned up imports: Removed VIDEO_PATH and XML_PATH
-from src.config import RESOURCES_DIR, INTERIM_DIR, DATA_SAMPLES
+from src.config import RESOURCES_DIR, INTERIM_DIR, DATA_SAMPLES, EMPTY_CAGE_VIDEOS, EMPTY_FRAMES_PER_VIDEO
 
 
 def setup_directories(base_dir, wipe=True):
@@ -121,7 +121,44 @@ def run_extraction():
         total_extracted += count
         cap.release()
 
-    print(f"Step 1 Complete. Total unique pairs: {total_extracted}")
+    empty_count = run_empty_extraction(img_dir, mask_dir)
+    suffix = f" + {empty_count} empty" if empty_count else ""
+    print(f"Step 1 Complete. Total annotated pairs: {total_extracted}{suffix}")
+
+
+def run_empty_extraction(img_dir: Path, mask_dir: Path) -> int:
+    """Sample evenly-spaced frames from empty-cage videos; mask = all zeros."""
+    if not EMPTY_CAGE_VIDEOS:
+        return 0
+    total = 0
+    for video_name in EMPTY_CAGE_VIDEOS:
+        v_path = RESOURCES_DIR / video_name
+        if not v_path.exists():
+            print(f"  [empty] Skipping {video_name}: File not found.")
+            continue
+        cap = cv2.VideoCapture(str(v_path))
+        if not cap.isOpened():
+            print(f"  [empty] Skipping {video_name}: Could not open.")
+            continue
+        n_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        indices  = np.linspace(0, n_frames - 1, EMPTY_FRAMES_PER_VIDEO, dtype=int)
+        prefix   = v_path.stem
+        saved    = 0
+        for idx in indices:
+            cap.set(cv2.CAP_PROP_POS_FRAMES, int(idx))
+            ret, frame = cap.read()
+            if not ret:
+                continue
+            h, w = frame.shape[:2]
+            name = f"{prefix}_frame_{idx:06d}"
+            cv2.imwrite(str(img_dir  / f"{name}.jpg"), frame)
+            cv2.imwrite(str(mask_dir / f"{name}.png"), np.zeros((h, w), dtype=np.uint8))
+            saved += 1
+        cap.release()
+        total += saved
+        if saved:
+            print(f"  [empty] {video_name}: {saved} frames extracted")
+    return total
 
 
 def prepare_stage(in_dir: Path, out_dir: Path, wipe: bool = False) -> tuple[list[Path], Path, Any, Any]:

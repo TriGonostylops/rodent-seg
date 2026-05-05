@@ -8,15 +8,16 @@ from pathlib import Path
 from tqdm import tqdm
 
 from src.config import (
-    DATA_SAMPLES, FILTERED_DIR,
+    DATA_SAMPLES, FILTERED_DIR, EMPTY_CAGE_VIDEOS,
     TRAIN_DIR, VAL_DIR, TEST_DIR,
     BASE_AUGMENT_MULTIPLIER, MAX_AUGMENT_MULTIPLIER, AUGMENTATION_SEED, AUG_PROBS, TARGET_SIZE,
     parse_video_stem,
 )
 from src.extract_masks import setup_directories
 
-# Map video stem → split (the only field still stored in config per entry).
 _STEM_TO_SPLIT = {Path(e["video"]).stem: e["split"] for e in DATA_SAMPLES}
+_STEM_TO_SPLIT.update({Path(v).stem: "train" for v in EMPTY_CAGE_VIDEOS})
+_EMPTY_STEMS   = {Path(v).stem for v in EMPTY_CAGE_VIDEOS}
 
 SPLIT_DIRS = {
     "train": TRAIN_DIR,
@@ -33,6 +34,8 @@ def get_meta_for_file(img_path: Path) -> dict | None:
     """
     for video_stem, split in _STEM_TO_SPLIT.items():
         if img_path.stem.startswith(video_stem):
+            if video_stem in _EMPTY_STEMS:
+                return {"split": "train", "rat_type": None, "camera": None, "time": None}
             parsed = parse_video_stem(video_stem)  # always valid — checked at import
             return {**parsed, "split": split}
     return None
@@ -49,7 +52,7 @@ def compute_multipliers(train_files: list[Path], base: int) -> dict[str, int]:
     counts: dict[str, int] = defaultdict(int)
     for f in train_files:
         meta = get_meta_for_file(f)
-        if meta:
+        if meta and meta["rat_type"] is not None:
             counts[meta["rat_type"]] += 1
 
     if not counts:

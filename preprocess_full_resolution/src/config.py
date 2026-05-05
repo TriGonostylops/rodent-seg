@@ -88,6 +88,11 @@ STATS_PATH = OUTPUT_DIR / "camera_stats.json"
 IOU_THRESHOLD = 0.85
 TARGET_SIZE   = 1024
 
+# Empty-cage recordings (no rat, mask = all zeros → train only, no XML needed).
+# Add filenames here once uploaded to resources/ as "camera-N_empty.mp4".
+EMPTY_CAGE_VIDEOS: list[str] = []
+EMPTY_FRAMES_PER_VIDEO: int  = 20
+
 # Set to True to let the pipeline compute the optimal camera→split assignment
 # automatically from camera_stats.json (or from rough estimates on first run).
 # The "split" fields in DATA_SAMPLES are then ignored and overridden at runtime.

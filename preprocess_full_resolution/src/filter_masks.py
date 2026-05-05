@@ -5,11 +5,12 @@ from collections import defaultdict
 from pathlib import Path
 from tqdm import tqdm
 
-from src.config import INTERIM_DIR, FILTERED_DIR, STATS_PATH, IOU_THRESHOLD, DATA_SAMPLES
+from src.config import INTERIM_DIR, FILTERED_DIR, STATS_PATH, IOU_THRESHOLD, DATA_SAMPLES, EMPTY_CAGE_VIDEOS
 from src.extract_masks import prepare_stage
 from src.stats import compute_camera_stats, aggregate_stats, save_stats, print_all_reports
 
 _STEM_TO_SPLIT = {Path(e["video"]).stem: e["split"] for e in DATA_SAMPLES}
+_STEM_TO_SPLIT.update({Path(v).stem: "train" for v in EMPTY_CAGE_VIDEOS})
 
 
 def _get_camera_stem(mask_path: Path) -> str:
