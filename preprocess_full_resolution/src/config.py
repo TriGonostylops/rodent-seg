@@ -49,26 +49,28 @@ def parse_video_stem(stem: str) -> dict:
 # "split": "train" | "val" | "test"
 DATA_SAMPLES = [
     # --- Validation (camera-1, camera-3) ---
-    {"video": "camera-1_black_white_day.mp4",     "xml": "camera-1_black_white_day.xml",     "split": "val"},
     {"video": "camera-3_black_white_day_1.mp4",   "xml": "camera-3_black_white_day_1.xml",   "split": "val"},
     {"video": "camera-3_black_white_day_2.mp4",   "xml": "camera-3_black_white_day_2.xml",   "split": "val"},
     {"video": "camera-3_black_white_night_1.mp4", "xml": "camera-3_black_white_night_1.xml", "split": "val"},
     {"video": "camera-3_black_white_night_2.mp4", "xml": "camera-3_black_white_night_2.xml", "split": "val"},
     {"video": "camera-3_black_white_night_3.mp4", "xml": "camera-3_black_white_night_3.xml", "split": "val"},
 
-    # --- Train (camera-12 confirmed; camera-5, 10, 11 — add when videos + XMLs arrive) ---
+    # --- Train ---
     {"video": "camera-12_black_white_day_1.mp4",  "xml": "camera-12_black_white_day_1.xml",  "split": "train"},
     {"video": "camera-12_black_white_day_2.mp4",  "xml": "camera-12_black_white_day_2.xml",  "split": "train"},
-    {"video": "camera-11_black_white_day_2.mp4",  "xml": "camera-11_black_white_day_2.xml", "split": "train"},
-    {"video": "camera-10_black_white_night_1.mp4",  "xml": "camera-10_black_white_night_1.xml", "split": "train"},
-    {"video": "camera-5_albino_day_1.mp4",  "xml": "camera-5_albino_day_1.xml", "split": "train"},
-    {"video": "camera-6_albino_night_1.mp4",  "xml": "camera-6_albino_night_1.xml", "split": "train"},
-    {"video": "camera-4_albino_day_1.mp4",  "xml": "camera-4_albino_day_1.xml", "split": "train"},
-    {"video": "camera-9_black_white_day_1.mp4",  "xml": "camera-9_black_white_day_1.xml", "split": "train"},
-    {"video": "camera-9_black_white_night_2.mp4",  "xml": "camera-9_black_white_night_2.xml", "split": "train"},
-    {"video": "camera-8_black_white_day_2.mp4",  "xml": "camera-8_black_white_day_2.xml", "split": "train"},
+    {"video": "camera-11_black_white_day_2.mp4",  "xml": "camera-11_black_white_day_2.xml",  "split": "train"},
+    {"video": "camera-10_black_white_night_1.mp4", "xml": "camera-10_black_white_night_1.xml", "split": "train"},
+    {"video": "camera-8_black_white_day_2.mp4",   "xml": "camera-8_black_white_day_2.xml",   "split": "train"},
+    {"video": "camera-8_black_white_night_3.mp4", "xml": "camera-8_black_white_night_3.xml", "split": "train"},
+    {"video": "camera-5_albino_day_1.mp4",        "xml": "camera-5_albino_day_1.xml",        "split": "train"},
+    {"video": "camera-6_albino_night_1.mp4",      "xml": "camera-6_albino_night_1.xml",      "split": "train"},
+    {"video": "camera-9_black_white_night_2.mp4", "xml": "camera-9_black_white_night_2.xml", "split": "train"},
+    {"video": "camera-9_black_white_day_1.mp4", "xml": "camera-9_black_white_day_1.xml", "split": "train"},
 
-    # --- Test — add when videos arrive ---
+    # --- Test (camera-5, camera-6, camera-9 — unseen during training and model selection) ---
+    {"video": "camera-1_black_white_day.mp4", "xml": "camera-1_black_white_day.xml", "split": "val"},
+    {"video": "camera-4_albino_day_1.mp4", "xml": "camera-4_albino_day_1.xml", "split": "train"},
+
 ]
 
 # Validate all entries at import time so a bad filename fails immediately.
@@ -80,10 +82,11 @@ OUTPUT_DIR   = BASE_DIR / "dataset"
 INTERIM_DIR  = OUTPUT_DIR / "interim"
 FILTERED_DIR = OUTPUT_DIR / "interim_filtered"
 
-TRAIN_DIR  = OUTPUT_DIR / "train"
-VAL_DIR    = OUTPUT_DIR / "val"
-TEST_DIR   = OUTPUT_DIR / "test"
-STATS_PATH = OUTPUT_DIR / "camera_stats.json"
+TRAIN_DIR      = OUTPUT_DIR / "train"
+VAL_DIR        = OUTPUT_DIR / "val"
+TEST_DIR       = OUTPUT_DIR / "test"
+GENERALIST_DIR = OUTPUT_DIR / "generalist"
+STATS_PATH     = OUTPUT_DIR / "camera_stats.json"
 
 IOU_THRESHOLD = 0.85
 TARGET_SIZE   = 1024

@@ -9,7 +9,7 @@ from tqdm import tqdm
 
 from src.config import (
     DATA_SAMPLES, FILTERED_DIR, EMPTY_CAGE_VIDEOS,
-    TRAIN_DIR, VAL_DIR, TEST_DIR,
+    TRAIN_DIR, VAL_DIR, TEST_DIR, GENERALIST_DIR,
     BASE_AUGMENT_MULTIPLIER, MAX_AUGMENT_MULTIPLIER, AUGMENTATION_SEED, AUG_PROBS, TARGET_SIZE,
     parse_video_stem,
 )
@@ -179,3 +179,40 @@ def run_augmentation():
         if img_dir.exists():
             n = len(list(img_dir.glob("*.jpg")))
             print(f"  dataset/{split}/images: {n} files")
+
+
+def run_generalist_export():
+    """
+    Step 4: Export every filtered frame (all splits, all cameras) into
+    dataset/generalist/ with resize-only — no augmentation.
+    Used to evaluate zero-shot generalist models on the full annotated set.
+    """
+    print("--- STEP 4: GENERALIST DATASET EXPORT ---")
+
+    in_img_dir  = FILTERED_DIR / "images"
+    in_mask_dir = FILTERED_DIR / "masks"
+    if not in_img_dir.exists():
+        raise FileNotFoundError(f"Filtered data not found at {FILTERED_DIR}. Run steps 1-2 first.")
+
+    out_img_dir  = GENERALIST_DIR / "images"
+    out_mask_dir = GENERALIST_DIR / "masks"
+    out_img_dir.mkdir(parents=True, exist_ok=True)
+    out_mask_dir.mkdir(parents=True, exist_ok=True)
+
+    resizer   = get_resizer()
+    img_files = sorted(in_img_dir.glob("*.jpg"))
+    total     = 0
+
+    for img_path in tqdm(img_files, desc="[generalist]"):
+        mask_path = in_mask_dir / f"{img_path.stem}.png"
+        image = cv2.imread(str(img_path))
+        mask  = cv2.imread(str(mask_path), cv2.IMREAD_GRAYSCALE)
+        if image is None or mask is None:
+            continue
+        resized = resizer(image=image, mask=mask)
+        cv2.imwrite(str(out_img_dir  / f"{img_path.stem}.jpg"), resized["image"])
+        cv2.imwrite(str(out_mask_dir / f"{img_path.stem}.png"), resized["mask"])
+        total += 1
+
+    print(f"Step 4 Complete. Generalist frames written: {total}")
+    print(f"  dataset/generalist/images: {total} files")

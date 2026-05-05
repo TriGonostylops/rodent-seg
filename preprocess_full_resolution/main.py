@@ -43,8 +43,16 @@ def main():
         traceback.print_exc()
         sys.exit(1)
 
+    try:
+        augment.run_generalist_export()
+    except Exception as e:
+        print(f"CRITICAL ERROR in Step 4 (Generalist Export): {e}")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
+
     print("\n=== PIPELINE FINISHED ===")
-    print("Data is ready in: dataset/train/  dataset/val/  dataset/test/")
+    print("Data is ready in: dataset/train/  dataset/val/  dataset/test/  dataset/generalist/")
 
 
 if __name__ == "__main__":
