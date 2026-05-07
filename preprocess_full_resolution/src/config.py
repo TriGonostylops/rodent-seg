@@ -70,6 +70,7 @@ DATA_SAMPLES = [
     # --- Test (camera-5, camera-6, camera-9 — unseen during training and model selection) ---
     {"video": "camera-1_black_white_day.mp4", "xml": "camera-1_black_white_day.xml", "split": "val"},
     {"video": "camera-4_albino_day_1.mp4", "xml": "camera-4_albino_day_1.xml", "split": "train"},
+    {"video": "camera-4_black_white_night_3.mp4", "xml": "camera-4_black_white_night_3.xml", "split": "train"},
 
 ]
 
