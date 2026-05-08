@@ -64,13 +64,13 @@ DATA_SAMPLES = [
     {"video": "camera-8_black_white_night_3.mp4", "xml": "camera-8_black_white_night_3.xml", "split": "train"},
     {"video": "camera-5_albino_day_1.mp4",        "xml": "camera-5_albino_day_1.xml",        "split": "train"},
     {"video": "camera-6_albino_night_1.mp4",      "xml": "camera-6_albino_night_1.xml",      "split": "train"},
-    {"video": "camera-9_black_white_night_2.mp4", "xml": "camera-9_black_white_night_2.xml", "split": "train"},
-    {"video": "camera-9_black_white_day_1.mp4", "xml": "camera-9_black_white_day_1.xml", "split": "train"},
 
     # --- Test (camera-5, camera-6, camera-9 — unseen during training and model selection) ---
-    {"video": "camera-1_black_white_day.mp4", "xml": "camera-1_black_white_day.xml", "split": "val"},
-    {"video": "camera-4_albino_day_1.mp4", "xml": "camera-4_albino_day_1.xml", "split": "train"},
-    {"video": "camera-4_black_white_night_3.mp4", "xml": "camera-4_black_white_night_3.xml", "split": "train"},
+    {"video": "camera-1_black_white_day.mp4", "xml": "camera-1_black_white_day.xml", "split": "test"},
+    {"video": "camera-4_albino_day_1.mp4", "xml": "camera-4_albino_day_1.xml", "split": "test"},
+    {"video": "camera-4_black_white_night_3.mp4", "xml": "camera-4_black_white_night_3.xml", "split": "test"},
+    {"video": "camera-9_black_white_day_1.mp4", "xml": "camera-9_black_white_day_1.xml", "split": "test"},
+    {"video": "camera-9_black_white_night_2.mp4", "xml": "camera-9_black_white_night_2.xml", "split": "test"},
 
 ]
 
