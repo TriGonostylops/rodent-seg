@@ -532,7 +532,17 @@ A finomhangolt modellek minden esetben felülmúlták a zero-shot megközelíté
 
 \newpage
 \chapter{Következtetés}
-% TODO: Final evaluation of whether the models are suitable for the targeted goal.
+A dolgozat célja egy teljesen automatizált, képkocka-szintű rágcsáló-szegmentáló rendszer kidolgozása volt, amely etológiai videófelvételeken képes megbízhatóan és emberi beavatkozás nélkül körülhatárolni a vizsgált állatot.
+
+Az \ref{tab:comparison_results}. táblázatban összefoglalt eredmények egyértelműen igazolják, hogy a finomhangolt, feladatspecifikus modellek lényegesen felülmúlják az általános célú alapmodelleket ezen a szűk tartományon. A leggyengébb finomhangolt változat (BCE veszteségfüggvénnyel, mIoU: 0.7425) is közel 15 százalékponttal haladja meg a legjobb automatizált zero-shot rendszert (SAM 2 Oracle, mIoU: 0.6442).
+
+A két megközelítés között azonban lényeges rendszertani különbség áll fenn, amelyet érdemes mérlegelni. A \textbf{könnyűsúlyú, feladatspecifikus modell} (SegFormer B3, $\approx$47M paraméter) gyors inferenciát biztosít, és a célfeladaton kiemelkedő teljesítményt nyújt, ugyanakkor tartományspecifikus, kézzel annotált betanító adathalmazt igényel. Ez egyszeri, de nem elhanyagolható befektetés. Ezzel szemben a \textbf{nehézebb, általános célú alapmodellek} (Florence-2: $\approx$800M, SAM 2: $\approx$300M paraméter) semmilyen annotálást vagy finomhangolást nem igényelnek, és ismeretlen feladatokra is rugalmasan alkalmazhatók. Hátránya, hogy szűk, specializált tartományban --- mint amilyen a ketrecben mozgó rágcsáló megfigyelése --- lényegesen alacsonyabb szegmentációs pontosságot érnek el, a Florence-2 esetén pedig degenerált maszkok is megjelenhetnek.
+
+Visszatérő, automatizált laboratóriumi munkafolyamat esetén --- ahol ugyanolyan típusú felvételeket kell rendszeresen feldolgozni --- az egyszeri annotációs befektetés egyértelműen megtérül: a finomhangolt modell stabilan és hatékonyan üzemeltethető. Egyszeri, exploratív vagy ismeretlen körülmények közötti alkalmazásnál az általános célú alapmodellek kínálhatnak gyorsabb megoldást, még ha kisebb pontosság árán is.
+
+A kétlépcsős architektúra kvantitatív eredményei a legjobbak, ugyanakkor videós alkalmazásban gyakorlati korlátot jelent a befoglaló doboz keret-keret közötti ingadozásából eredő \textit{vibrálás} (flickering): a maszk pozíciója képkockáról képkockára hirtelen változhat. Az egylépéses modell ezzel szemben kedvezőbb kompromisszumot kínál a statikus szegmentációs pontosság és a temporális stabilitás között.
+
+Összességében a kutatás igazolja, hogy könnyűsúlyú, finomhangolt transzformer-alapú szegmentáció életképes és hatékony megoldás az automatizált etológiai megfigyeléshez --- feltéve, hogy rendelkezésre áll a szükséges tartományspecifikus annotált adathalmaz.
 
 \newpage
 \begin{bibdiv}
