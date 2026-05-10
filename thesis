@@ -382,9 +382,9 @@ Az előre betanított, zero-shot módon (finomhangolás nélkül) tesztelt model
 \hline
 \textbf{Modell} & \textbf{mIoU} & \textbf{Dice Score} & \textbf{Boundary IoU} & \textbf{Hausdorff Távolság (px)} \\
 \hline
-Florence-2 & 0.4182 & 0.5323 & 0.1666 & 176.9166 \\
-Grounded-SAM 2 & 0.3976 & 0.4733 & 0.1646 & 76.2678 \\
-SAM 2 (Oracle) & 0.6091 & 0.7346 & 0.2606 & 45.0559 \\
+Florence-2 & 0.5083 & 0.6225 & 0.2146 & 105.7337 \\
+Grounded-SAM 2 & 0.4061 & 0.4740 & 0.1775 & 69.7024 \\
+SAM 2 (Oracle) & 0.5764 & 0.7075 & 0.2488 & 53.0209 \\
 \hline
 \end{tabular}
 \end{table}
@@ -393,11 +393,11 @@ SAM 2 (Oracle) & 0.6091 & 0.7346 & 0.2606 & 45.0559 \\
 
 A kapott mérési eredmények tökéletesen tükrözik a 4. fejezetben felvázolt architekturális sajátosságokat és korlátokat.
 
-Kiemelkedő, de mesterséges teljesítményt nyújtott a \textbf{SAM 2 (Oracle)} felállás. A 0.6091-es mIoU és a kifejezetten alacsony, 45 pixeles Hausdorff távolság bizonyítja, hogy a SAM 2 maszk-dekódolója vizuálisan rendkívül robusztus. Mivel azonban ez emberi beavatkozást igényel a ennek gyakorlati eredménye pontatlanabb, és a gyakorlatban nem skálázható.
+Kiemelkedő, de mesterséges teljesítményt nyújtott a \textbf{SAM 2 (Oracle)} felállás. A 0.5764-es mIoU és a kifejezetten alacsony, 53 pixeles Hausdorff távolság bizonyítja, hogy a SAM 2 maszk-dekódolója vizuálisan rendkívül robusztus. Mivel azonban ez emberi beavatkozást igényel a ennek gyakorlati eredménye pontatlanabb, és a gyakorlatban nem skálázható.
 
-A teljesen automatizált láncolat, a \textbf{Grounded-SAM 2} érte el a leggyengébb átfedési mutatókat (mIoU: 0.3976).
+A teljesen automatizált láncolat, a \textbf{Grounded-SAM 2} érte el a leggyengébb átfedési mutatókat (mIoU: 0.4061).
 
-A \textbf{Florence-2} teljesítménye rávilágít a szekvencia-alapú (poligon) maszkgenerálás veszélyeire a biológiai adatoknál. Bár az átfedése marginálisan jobb volt (mIoU: 0.4182), mint a Grounded-SAM 2-nek, a modell \textbf{Hausdorff távolsága extrém magasra, 176.9 pixelre ugrott}. A manuális vizuális ellenőrzések és a futtatási naplók bizonyítják, hogy ez az érték a degenerált maszkok megjelenésének köszönhető.
+A \textbf{Florence-2} teljesítménye rávilágít a szekvencia-alapú (poligon) maszkgenerálás veszélyeire a biológiai adatoknál. Bár az átfedése érezhetően jobb volt (mIoU: 0.5083), mint a Grounded-SAM 2-nek, a modell \textbf{Hausdorff távolsága extrém magasra, 105.7 pixelre ugrott}. A manuális vizuális ellenőrzések és a futtatási naplók bizonyítják, hogy ez az érték a degenerált maszkok megjelenésének köszönhető.
 
 Az eredmények egyértelműen rámutatnak a kutatás elsődleges konklúziójára: a vizsgált zero-shot alapmodellek önmagukban, utólagos módosítás nélkül nem képesek megbízhatóan és teljesen automatizáltan megoldani a rágcsáló-szegmentálást egy ilyen specifikus környezetben.
 
