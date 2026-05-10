@@ -378,6 +378,7 @@ Az előre betanított, zero-shot módon (finomhangolás nélkül) tesztelt model
 
 
 \label{tab:zero_shot_results}
+\resizebox{\textwidth}{!}{%
 \begin{tabular}{lrrrr}
 \hline
 \textbf{Modell} & \textbf{mIoU} & \textbf{Dice Score} & \textbf{Boundary IoU} & \textbf{Hausdorff Távolság (px)} \\
@@ -386,7 +387,8 @@ Florence-2 & 0.5083 & 0.6225 & 0.2146 & 105.7337 \\
 Grounded-SAM 2 & 0.4061 & 0.4740 & 0.1775 & 69.7024 \\
 SAM 2 (Oracle) & 0.5764 & 0.7075 & 0.2488 & 53.0209 \\
 \hline
-\end{tabular}
+\end{tabular}%
+}
 \end{table}
 
 \subsection{Az eredmények elemzése és a degenerált maszkok problémája}
@@ -494,6 +496,7 @@ Az alábbi táblázat összefoglalja a három kísérleti SegFormer B3 konfigur�
 \centering
 \caption{A finomhangolt SegFormer B3 modellek kvantitatív összehasonlítása}
 \label{tab:finetuned_results}
+\resizebox{\textwidth}{!}{%
 \begin{tabular}{lrrrr}
 \hline
 \textbf{Modell} & \textbf{mIoU} & \textbf{Dice Score} & \textbf{Boundary IoU} & \textbf{Hausdorff Távolság (px)} \\
@@ -503,7 +506,8 @@ SegFormer B3 (BCE loss)         & 0.7425 & 0.8435 & 0.3447 & 57.3930 \\
 SegFormer B3 (Dice loss)        & 0.7452 & 0.8465 & 0.3489 & 61.8899 \\
 SegFormer B3 (kétlépcsős)       & 0.7625 & 0.8559 & 0.4142 & 52.8469 \\
 \hline
-\end{tabular}
+\end{tabular}%
+}
 \end{table}
 
 A kétlépcsős architektúra minden metrikában a legjobb eredményt érte el: a legmagasabb mIoU (0.7625) és Boundary IoU (0.4142) értékeket, valamint a legalacsonyabb Hausdorff távolságot (52.85 px) produkálta. Ez igazolja, hogy a finomabb térbeli részletekre fókuszáló második lépés érdemben javítja a kontúrok pontosságát. Ugyanakkor a kétlépcsős rendszer videón vizsgálva egy gyakorlati hátrányt mutat: a befoglaló doboz (bounding box) keret-keret közötti ingadozása \textit{vibrálást} (flickering) okoz a maszk pozíciójában, ami az egylépéses modellnél nem figyelhető meg. Ez azt jelenti, hogy a számszerű fölény ellenére a kétlépcsős megközelítés nem tekinthető egyértelműen jobb választásnak az egylépéses modellekkel szemben; a két architektúra között kompromisszumot kell kötni a statikus pontosság és a temporális stabilitás között.
@@ -516,6 +520,7 @@ Az \ref{tab:comparison_results}. táblázat a finomhangolt modellek és a zero-s
 \centering
 \caption{Zero-shot és finomhangolt modellek összehasonlítása azonos teszthalmazon}
 \label{tab:comparison_results}
+\resizebox{\textwidth}{!}{%
 \begin{tabular}{llrrrr}
 \hline
 \textbf{Típus} & \textbf{Modell} & \textbf{mIoU} & \textbf{Dice Score} & \textbf{Boundary IoU} & \textbf{Hausdorff (px)} \\
@@ -529,7 +534,8 @@ Finomhangolt & SegFormer B3 (BCE)           & 0.7425 & 0.8435 & 0.3447 & 57.3930
 Finomhangolt & SegFormer B3 (Dice)          & 0.7452 & 0.8465 & 0.3489 & 61.8899 \\
 Finomhangolt & SegFormer B3 (kétlépcsős)   & 0.7625 & 0.8559 & 0.4142 & 52.8469 \\
 \hline
-\end{tabular}
+\end{tabular}%
+}
 \end{table}
 
 A finomhangolt modellek minden esetben felülmúlták a zero-shot megközelítéseket az átfedési metrikák (mIoU, Dice, Boundary IoU) tekintetében. A leggyengébb finomhangolt modell (BCE loss, mIoU: 0.7425) is 15 százalékponttal haladja meg a legjobb automatizált zero-shot rendszert (SAM 2 Oracle, mIoU: 0.6442).
