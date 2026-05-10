@@ -414,18 +414,18 @@ Az eredmények egyértelműen rámutatnak a kutatás elsődleges konklúziójár
 
 
 \section{Adat-előkészítés és a CVAT annotációs folyamat}
-A kísérletekhez felhasznált alap adathalmaz jelenleg nyolc laboratóriumi videófelvételből (mp4 formátum) és a hozzájuk tartozó XML annotációkból épült fel, amelyeket két különböző kameraállásból (camera-1 és camera-3) rögzítettek nappali és éjszakai körülmények között. A betanításhoz és kiértékeléshez a videókból kinyert képkockákat (frame-eket) és az XML koordináták alapján generált bináris maszkokat használtam.
+A kísérletekhez felhasznált adathalmaz tizennyolc laboratóriumi videófelvételből (mp4 formátum) és a hozzájuk tartozó XML annotációkból épült fel, amelyeket tíz különböző kameraállásból (camera-1, -3, -4, -5, -6, -8, -9, -10, -11, -12) rögzítettek nappali és éjszakai körülmények között. A felvételek két különböző patkánytípust tartalmaznak: albínó (camera-4, -5, -6) és fekete-fehér (camera-1, -3, -4, -8, -9, -10, -11, -12) egyedeket. A betanításhoz és kiértékeléshez a videókból kinyert képkockákat (frame-eket) és az XML koordináták alapján generált bináris maszkokat használtam.
 
 \textbf{Az annotációs folyamat kihívásai és a "Corner Bias":}
 Az adatbázis előállítását kezdetben a CVAT szoftver automatizált, poligon-követő (polygon tracking) funkciójával kíséreltem meg. Ennek az eszköznek a logikája, hogy a felhasználó csupán bizonyos kulcsképkockákon (key frame) annotál, az algoritmus pedig a köztes képkockákon egy merev test modellt feltételezve interpolálja és propagálja a maszkot. A rágcsálók folyamatosan változó sebességű, komplex és rendkívül rugalmas (amorf) mozdulatai miatt azonban ez az eszköz elégtelen precizitással működött, így szinte minden képkockán manuális korrekcióra volt szükség.
 
-Továbbá a szekvenciális videóannotálás során készült kisebb adatbázis természetéből adódóan túltanuláshoz (overfitting) vezet. Ez az isemétlődő mozdulatok, hasonló testtartás és egyező ketrecben elfoglalt térbeli pozíciójának eredménye. Célszerűbb, ha csak az új információt tartalmazó képek legprecízebb annotációjára fordítom a figyelmemet. Fontos ezeknek az egyensúlya is, ha a modell csak a sarokban látja a patkányt, akkor ezzel magam torzítom el a súlyokat, és a máshol elhelyezkedő találatokat drasztikusan romló pontossággal szegmentálja majd. Tehát a cél, hogy minden célfeladatra változatos példákat tudjak biztosítani megfelelő arányban. A tanító adatbázisba kerülnek emellett üres ketrecekről készített képek is, amelyek negatív példaként segítik a modell háttérosztályozási képességét.
+Továbbá a szekvenciális videóannotálás során készült kisebb adatbázis természetéből adódóan túltanuláshoz (overfitting) vezet. Ez az isemétlődő mozdulatok, hasonló testtartás és egyező ketrecben elfoglalt térbeli pozíciójának eredménye. Célszerűbb, ha csak az új információt tartalmazó képek legprecízebb annotációjára fordítom a figyelmemet. Fontos ezeknek az egyensúlya is, ha a modell csak a sarokban látja a patkányt, akkor ezzel magam torzítom el a súlyokat, és a máshol elhelyezkedő találatokat drasztikusan romló pontossággal szegmentálja majd. Tehát a cél, hogy minden célfeladatra változatos példákat tudjak biztosítani megfelelő arányban. A tanító adatbázisba opcionálisan üres ketrecekről készített képek is kerülhetnek, amelyek negatív példaként segítik a modell háttérosztályozási képességét; a pipeline legfeljebb 10\%-ban engedélyezi arányukat.
 
 \textbf{Adathalmaz felosztás és az adatszivárgás elkerülése:}
-A tanító, validációs és teszthalmaz szigorú szétválasztása kameraegységek szerint történt. Ez a megközelítés biztosítja, hogy egyazon kameraállásból készült felvételek ne kerülhessenek egyszerre a tanító és a kiértékelő halmazba, ezáltal megakadályozva az adatszivárgást (data leakage) — azt a jelenséget, amikor a modell a kiértékelés során olyan vizuális mintákat „ismer fel", amelyekkel már a tanítás során találkozott. A validációs halmazt a camera-1 (nappali) és a camera-3 (nappali $\times$2, éjszakai $\times$3) felvételeiből állítottam össze. A tanítóhalmazhoz jelenleg a camera-12 (nappali $\times$2) felvételei kerültek felhasználásra; a jövőben tervezett camera-5, -10 és -11 felvételek szintén ezt a részt bővítik majd. A teszthalmaz kialakítása még folyamatban van.
+A tanító, validációs és teszthalmaz szigorú szétválasztása kameraegységek szerint történt. Ez a megközelítés biztosítja, hogy egyazon kameraállásból készült felvételek ne kerülhessenek egyszerre a tanító és a kiértékelő halmazba, ezáltal megakadályozva az adatszivárgást (data leakage) — azt a jelenséget, amikor a modell a kiértékelés során olyan vizuális mintákat „ismer fel", amelyekkel már a tanítás során találkozott. A validációs halmazt a camera-3 (nappali $\times$2, éjszakai $\times$3) felvételeiből állítottam össze. A tanítóhalmazba a camera-5 (albínó, nappali), -6 (albínó, éjszakai), -8 (fekete-fehér, nappali és éjszakai), -10 (fekete-fehér, éjszakai), -11 (fekete-fehér, nappali) és -12 (fekete-fehér, nappali $\times$2) felvételei kerültek. A teszthalmaz a camera-1 (fekete-fehér, nappali), camera-4 (albínó, nappali; fekete-fehér, éjszakai) és camera-9 (fekete-fehér, nappali és éjszakai) felvételeiből áll — ezek a kameraállások a tanítás és a modellkiválasztás teljes ideje alatt ismeretlenek maradtak.
 
 \textbf{Adatszűrés és augmentáció:}
-Ezekből az okokból kifolyólag csak a változatos, egyedi testpozíciók és a részleges takarások legmagasabb precizitású, manuális szegmentálására fókuszáltam. A már meglévő videós szekvenciákból a redundancia elkerülése érdekében egy saját szűrőalgoritmust alkalmaztam. A rendszer kiszámítja a maszkok közötti globális átfedést, és ha két vizsgált maszk közötti hasonlóság (IoU) meghaladta a 0.5-ös küszöbértéket, a képkocka eldobásra került.
+Ezekből az okokból kifolyólag csak a változatos, egyedi testpozíciók és a részleges takarások legmagasabb precizitású, manuális szegmentálására fókuszáltam. A már meglévő videós szekvenciákból a redundancia elkerülése érdekében egy saját szűrőalgoritmust alkalmaztam. A rendszer kiszámítja a maszkok közötti globális átfedést, és ha két vizsgált maszk közötti hasonlóság (IoU) meghaladta a 0.85-ös küszöbértéket, a képkocka eldobásra került.
 
 A szűrőalgoritmus egy implicit, de mérhető mellékhatással is jár: a fennmaradó képkockák viselkedési eloszlása eltolódik az aktív, mozgó pózok irányába. Ennek oka, hogy a statikus, pihenő vagy tisztálkodó patkány egymást követő képkockáin a maszkok alig változnak — ezek IoU értéke magas, így eldobásra kerülnek. Ezzel szemben a futó, ugró, nyújtózkodó patkány maszkjai képkockáról képkockára jelentősen eltérnek, így túlélik a szűrést. Ezt a hatást a maszk-kompaktsággal ($\text{mask\_area} / \text{bounding\_box\_area}$) számszerűsítettem: alacsony érték nyújtott, aktív testtartást jelöl, magas érték összehúzódott, nyugalmi pózt. A szűrés után az adathalmaz közel 42\%-a az alacsony kompaktsági tartományba ($0.2$–$0.4$) esett, további 46\% a vegyes tartományba ($0.4$–$0.6$), mindössze 12\% volt erősen kompakt — ami megerősíti, hogy az IoU-szűrő közvetve a változatosabb, informatívabb pózokat részesíti előnyben anélkül, hogy erre explicit viselkedési annotáció szükséges lenne.
 
@@ -463,9 +463,9 @@ A SegFormer sikerének kulcsa, hogy a transzformerek globális kontextus-megért
 \section{Modellválasztás és kísérleti felállások}
 A finomhangolás (fine-tuning) során több modellméretet és veszteségfüggvényt is megvizsgáltam a leghatékonyabb konfiguráció megtalálása érdekében.
 
-\textbf{Modellméret és felbontás (B3 vs. B5):} A kísérletek során összehasonlításra került a közepes méretű \texttt{nvidia/mit-b3} és a lényegesen nagyobb paraméterszámú \texttt{nvidia/mit-b5} kódoló. Az eredmények azt mutatták, hogy a rendelkezésre álló, viszonylag kisméretű betanító adathalmaz miatt a nagyobb (B5) modell nem hozott szignifikáns minőségbeli javulást.% Ezzel szemben a memóriakövetelményei miatt a B5 modell esetében a bemeneti képek felbontását csökkenteni kellett (512x512 pixelre). Mivel a rágcsáló farka és fülei rendkívül finom térbeli részleteket alkotnak, a natív 1024x1024 pixeles bemenet megtartása kritikusabbnak bizonyult a paraméterszámnál. Ennek megfelelően a végleges architektúra alapjául a SegFormer B3 verziója szolgált. ??? KELLENEK A SZÁMOK
+\textbf{Modellméret és felbontás (B3 vs. B5):} A kísérletek során összehasonlításra került a közepes méretű \texttt{nvidia/mit-b3} és a lényegesen nagyobb paraméterszámú \texttt{nvidia/mit-b5} kódoló. A B5 modell memóriakövetelményei miatt a bemeneti képek felbontását 512$\times$512 pixelre kellett csökkenteni (szemben a B3 1024$\times$1024 pixeles bemenetével). A teszthalmazon mért eredmények azt mutatták, hogy a B5 modell (mIoU: 0.6640) nem hozott szignifikáns minőségbeli javulást a B3-hoz képest — sőt, a kisebb bemeneti felbontás miatt elmaradt attól (B3 BCE: mIoU 0.7425). Mivel a rágcsáló farka és fülei rendkívül finom térbeli részleteket alkotnak, a natív 1024$\times$1024 pixeles bemenet megtartása kritikusabbnak bizonyult a paraméterszámnál. Ennek megfelelően a végleges architektúra alapjául a SegFormer B3 verziója szolgált.
 
-\textbf{Veszteségfüggvények (weighted BCE vs. Dice):} A szegmentációs pontosság növelése érdekében teszteltem a hagyományos súlyozott Bináris Keresztentrópia (BCE) és a kifejezetten a maszkok átfedésére fókuszáló Dice veszteségfüggvényeket. A vizuális (kvalitatív) kiértékelés során nem volt megfigyelhető drasztikus különbség a generált maszkok minőségében, így a stabilabb konvergenciát biztosító, súlyozott BCE veszteségfüggvény maradt a munkafolyamat alapja.
+\textbf{Veszteségfüggvények (weighted BCE vs. Dice):} A szegmentációs pontosság növelése érdekében teszteltem a hagyományos súlyozott Bináris Keresztentrópia (BCE) és a kifejezetten a maszkok átfedésére fókuszáló Dice veszteségfüggvényeket. A súlyozott BCE esetén a háttér osztály súlya 1,0, a rágcsáló osztályé 5,0 volt, ezzel kompenzálva a két osztály közötti pixelarány-egyenlőtlenséget. A vizuális (kvalitatív) kiértékelés során nem volt megfigyelhető drasztikus különbség a generált maszkok minőségében, így a stabilabb konvergenciát biztosító, súlyozott BCE veszteségfüggvény maradt a munkafolyamat alapja.
 
 \section{A betanítás (Fine-tuning) hiperparaméterei}
 A kiválasztott SegFormer B3 modell finomhangolása a Kaggle felhőkörnyezetben, NVIDIA Tesla T4 grafikus kártyákon történt. A betanítást az alábbi hiperparaméterekkel végeztem:
@@ -481,7 +481,7 @@ Bár az alapszintű SegFormer robusztusan ismerte fel az állatot, a maszkok kö
 A rendszer két független SegFormer modellt integrál:
 \begin{enumerate}
     \item \textbf{Globális Lokalizációs Modell (Stage 1):} Az első hálózat a teljes (1024x1024) felvételt kapja meg bemenetként. Elsődleges feladata nem a tökéletes maszkolás, hanem a rágcsáló biztonságos lokalizálása a ketrecben. A prediktált maszk alapján a rendszer kiszámít egy befoglaló dobozt (bounding box).
-    \item \textbf{Lokális Szakértői Modell (Stage 2):} Az eredeti képből a befoglaló doboz alapján kivágjuk (crop) a rágcsálót. Ezt a szorosan vágott, kizárólag a patkányt tartalmazó képrészletet kapja meg a második, kifejezetten erre a "nagyított" nézetre finomhangolt (expert) modell.
+    \item \textbf{Lokális Szakértői Modell (Stage 2):} Az eredeti képből a befoglaló doboz alapján kivágjuk (crop) a rágcsálót. A vágás előtt a befoglaló dobozt minden irányban 25\%-kal kibővítjük, majd négyzetesre igazítjuk; a kivágott régiót Lanczos-interpolációval 512$\times$512 pixelre skálázzuk. Ezt a szorosan vágott, kizárólag a patkányt tartalmazó képrészletet kapja meg a második, kifejezetten erre a „nagyított" nézetre finomhangolt modell, amelynek tanulási rátája $3 \times 10^{-5}$ (az első lépcsős $6 \times 10^{-5}$-del szemben).
 \end{enumerate}
 
 \section{A finomhangolt modellek kvantitatív kiértékelése}
@@ -496,9 +496,10 @@ Az alábbi táblázat összefoglalja a három kísérleti SegFormer B3 konfigur�
 \hline
 \textbf{Modell} & \textbf{mIoU} & \textbf{Dice Score} & \textbf{Boundary IoU} & \textbf{Hausdorff Távolság (px)} \\
 \hline
-SegFormer B3 (BCE loss)    & 0.7425 & 0.8435 & 0.3447 & 57.3930 \\
-SegFormer B3 (Dice loss)   & 0.7452 & 0.8465 & 0.3489 & 61.8899 \\
-SegFormer B3 (kétlépcsős)  & 0.7625 & 0.8559 & 0.4142 & 52.8469 \\
+SegFormer B5 (BCE loss, 512px)  & 0.6640 & 0.7928 & 0.2085 & 54.7074 \\
+SegFormer B3 (BCE loss)         & 0.7425 & 0.8435 & 0.3447 & 57.3930 \\
+SegFormer B3 (Dice loss)        & 0.7452 & 0.8465 & 0.3489 & 61.8899 \\
+SegFormer B3 (kétlépcsős)       & 0.7625 & 0.8559 & 0.4142 & 52.8469 \\
 \hline
 \end{tabular}
 \end{table}
@@ -521,9 +522,10 @@ Zero-shot & Florence-2              & 0.6014 & 0.7069 & 0.2815 & 98.7136 \\
 Zero-shot & Grounded-SAM 2          & 0.4674 & 0.5284 & 0.2304 & 67.4890 \\
 Zero-shot & SAM 2 (Oracle)          & 0.6442 & 0.7686 & 0.3074 & 52.4781 \\
 \hline
-Finomhangolt & SegFormer B3 (BCE)         & 0.7425 & 0.8435 & 0.3447 & 57.3930 \\
-Finomhangolt & SegFormer B3 (Dice)        & 0.7452 & 0.8465 & 0.3489 & 61.8899 \\
-Finomhangolt & SegFormer B3 (kétlépcsős) & 0.7625 & 0.8559 & 0.4142 & 52.8469 \\
+Finomhangolt & SegFormer B5 (BCE, 512px)    & 0.6640 & 0.7928 & 0.2085 & 54.7074 \\
+Finomhangolt & SegFormer B3 (BCE)           & 0.7425 & 0.8435 & 0.3447 & 57.3930 \\
+Finomhangolt & SegFormer B3 (Dice)          & 0.7452 & 0.8465 & 0.3489 & 61.8899 \\
+Finomhangolt & SegFormer B3 (kétlépcsős)   & 0.7625 & 0.8559 & 0.4142 & 52.8469 \\
 \hline
 \end{tabular}
 \end{table}
