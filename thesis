@@ -104,7 +104,7 @@
 {\Large\bf Természettudományi és Informatikai Kar}
 \vspace{0.3cm}
 
-{\Large\bf XXXXXXX Intézet, XXXXXXXXX Tanszék}
+{\Large\bf Informatikai Intézet, XXXXXXXXX Tanszék}
 \vspace{3cm}
 
 
@@ -125,8 +125,8 @@ Segmentation of Partially Occluded Rodents Using Transformer Models
 {\large
 \begin{tabular}{c@{\hspace{2cm}}c}
 \emph{Készítette:}     &\emph{Témavezető:}\\
-\bf{Végzős Edömér}  &\bf{Dr. Kiváló Kitti}\\
-XXXXXX BSc hallgató    & egyetemi docens\\
+\bf{Balázsi Márton}  &\bf{Körmöczi László Ádám}\\
+Üzemmérnök informatikus BProf hallgató    & egyetemi docens\\
 &
 \end{tabular}
 }
@@ -138,15 +138,15 @@ XXXXXX BSc hallgató    & egyetemi docens\\
 
 %masodik oldal osszefogalalo
 \begin{abstract}
-Az etológiai kutatásokban a videós viselkedéselemzés kulcslépése a vizsgált állat automatikus lokalizálása és szegmentálása. Ez a feladat különösen nagy kihívást jelent, ha az állatot a ketrec elemei részlegesen takarják, vagy ha a felvétel éjszaka, infravörös megvilágítás mellett készül.
+Az etológiai kutatásokban a videós viselkedéselemzés kulcslépése a vizsgált állat automatikus lokalizálása és szegmentálása. Ez a feladat különösen nagy kihívást jelent, ha az állatot a ketrec elemei részlegesen takarják, vagy ha a felvétel éjszaka készül.
 
-Jelen dolgozat a Microsoft Florence-2, a Meta SAM 2 és a Grounded-SAM 2 zero-shot alapmodellek teljesítményét elemzi, majd összehasonlítja őket a feladatra finomhangolt SegFormer transzformer modellekkel. A kiértékeléshez egy tíz kameraállásból, tizennyolc laboratóriumi videóból és 736 manuálisan annotált kép-maszk párból álló, saját adathalmazt állítottam össze.
+A dolgozat a Microsoft Florence-2, a Meta SAM 2 és a Grounded-SAM 2 zero-shot alapmodellek teljesítményét elemzi, majd összehasonlítja őket a feladatra finomhangolt SegFormer transzformer modellel. A kiértékeléshez egy tíz kameraállásból, tizennyolc laboratóriumi videóból és 736 manuálisan annotált kép-maszk párból álló, saját adathalmazt állítottam össze.
 
-A kísérletek során a SegFormer B3 architektúrát finomhangoltam súlyozott BCE- és Dice-veszteségfüggvénnyel, valamint kidolgoztam egy kétlépcsős, kaszkádolt rendszert. Ennek első fázisa globálisan lokalizálja a rágcsálót, második fázisa pedig egy nagyított kivágaton végez finomabb szegmentálást.
+A kísérletek során a SegFormer B3 architektúrát finomhangoltam súlyozott BCE és Dice veszteségfüggvénnyel, valamint kidolgoztam egy kétlépcsős rendszert. Ennek első fázisa lokalizálja a rágcsálót, második fázisa pedig egy nagyított, kivágott képen végez finomabb szegmentálást.
 
 Az azonos teszthalmazon mért eredmények szerint a legjobb zero-shot modell (SAM 2 Oracle, mIoU: 0{,}64) és a legjobb finomhangolt modell (kétlépcsős SegFormer B3, mIoU: 0{,}76) között közel 12 százalékpontos különbség mutatkozott. A kísérlet igazolja, hogy egyszeri annotációs befektetés árán egy könnyűsúlyú, finomhangolt transzformer modell megbízható és hatékony megoldást nyújt az automatizált etológiai megfigyeléshez.
 
-{\bf Kulcsszavak:} szemantikus szegmentálás, transzformer, rágcsáló, SegFormer, etológia, finomhangolás
+{\bf Kulcsszavak:} szemantikus szegmentálás, transzformer, rágcsáló, SegFormer,  finomhangolás
 \end{abstract}
 
 
@@ -195,7 +195,7 @@ A CNN-alapú architektúrák (mint a U-Net \cite{ronneberger2015u}) forradalmas�
 
 A számítógépes látás egyik kiemelt biológiai alkalmazási területe az állatviselkedés-tan (etológia). Ezen kutatások során gyakran készülnek hosszas videófelvételek különböző színű és mintázatú patkányokról. A megfigyelések tipikusan standardizált laboratóriumi ketrecekben történnek, amelyeket egy, esetenként két, különböző szögből pozicionált kamera rögzít. A természetes viselkedés kiváltása érdekében a ketrecben különféle tereptárgyak, játékok és etető találhatók. Jelen kutatás szempontjából egy rendkívül fontos feltétel, hogy egy ketrecben mindig pontosan egy rágcsáló tartózkodik.
 
------(EZ CSAK AKKOR HA MARAD IDŐ ESTI ADAT ANNOTÁCIÓRA)-----------
+
 Mivel a rágcsálók éjszakai életmódot folytatnak, a legaktívabb periódusaik megfigyelése sötétben történik, amihez a videókat infravörös (IR) fénnyel megvilágítva, hagyományos kamerákkal rögzítik. Ez a specifikus környezet számos komoly kihívást állít a gépi látásra épülő modellek elé. A látható fény hiányából adódó színinformáció-veszteség ronthatja a modellek működését.
 
 
@@ -228,9 +228,37 @@ Mivel a transzformer architektúra önmagában nem rendelkezik térbeli informá
 
 \section{Globális kontextus és önfigyelem}
 
-A pozicionális információval ellátott vektorok ezt követően a transzformer kódoló (encoder) rétegeibe kerülnek. Itt lép működésbe az önfigyelmi mechanizmus, amely minden egyes patch esetében kiszámítja, hogy az mennyire releváns a kép összes többi patch-e szempontjából.
+A transzformer kódoló rétegeiben minden patch-vektor három tanítható lineáris
+vetítésen esik át, amelyek rendre a lekérdező (Query, Q), a kulcs (Key, K) és
+az érték (Value, V) vektort állítják elő.
 
- Míg a konvolúciós hálózatoknál a távoli képpontok összekapcsolásához mély rétegekre és az információ jelentős tömörítésére van szükség, a ViT közvetlen matematikai kapcsolatot létesít a kép bármely két pontja között, függetlenül azok távolságától. Ez a képesség teszi a transzformereket kifejezetten alkalmassá az olyan összetett vizuális feladatok megoldására, mint a részleges takarás (occlusion) kezelése az objektumok szegmentálása során.
+Az önfigyelem lényege egyetlen mátrixszorzatba sűríthető. A $Q \times K^T$
+szorzat egy $n \times n$-es hasonlósági táblát ad, amelynek $(i,j)$ eleme
+megmutatja, hogy az $i$-edik és a $j$-edik patch mennyire hasonló egymáshoz.
+Ez a számítás egyszerre, párhuzamosan fut le az összes lehetséges
+patch-kombinációra. Az értékeket egy $\frac{1}{\sqrt{d}}$ skálázó
+tényezővel normálják, majd soronként softmax transzformáció alakítja
+valószínűségi eloszlássá.
+
+A kapott súlyok határozzák meg, hogy az egyes patch-ek milyen arányban vonják
+be a többi patch V vektorát a saját végső reprezentációjuk kiszámításába. Az
+eredmény minden patch esetén a V mátrix súlyozott összege, ahol a súlyokat a
+$Q \times K^T$ hasonlóság szabja meg.
+
+A $W_Q$ és $W_K$ vetítési mátrixokat a hálózat a betanítás során tanulja.
+Ezek a mátrixok egy olyan teret alakítanak ki, amelyben a szemantikailag
+összetartozó patch-ek hasonló irányba mutatnak, és így magas hasonlósági
+értéket kapnak egymással.
+
+A konvolúciós hálózatokkal összehasonlítva a különbség nem a számítási
+hatékonyságban, hanem a kifejezőerőben rejlik. Egy CNN-nek $O(\log n)$ rétegre
+van szüksége ahhoz, hogy két egymástól távoli patch között kapcsolatot
+létesítsen, és minden közbülső lépésnél információ veszhet el. Az önfigyelmi
+mechanizmus ezzel szemben az összes patch-kombináció hasonlóságát egyetlen
+lépésben számítja ki, így a modell már a legelső rétegben globális
+kontextussal rendelkezik. Ez teszi a transzformereket különösen alkalmassá a
+részleges takarás kezelésére, mivel egy eltakart testrész közvetlenül,
+közbülső lépések nélkül meríthet információt az állat látható részeiből.
 \newpage
 
 
