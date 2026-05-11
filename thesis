@@ -180,7 +180,7 @@ Ezeknek a feladatoknak a megoldására az 1970-es és 1980-as években kizáról
 
 A következő áttörő sikert a mély neurális hálózatok (Deep Neural Networks, DNN), azon belül is a konvolúciós neurális hálózatok (Convolutional Neural Networks, CNN) megjelenése jelentette \cite{krizhevsky2012imagenet}. A hagyományos módszerekkel ellentétben, ahol a jellemzőket (feature) a kutatók manuálisan definiálták, a CNN-ek a betanítás során maguktól képesek a releváns vizuális jellemzők kinyerésére. Bár ezen modellek belső reprezentációi ember számára nem interpretálhatók (fekete doboz jellegűek), komplex vizuális feladatok megoldásában felülmúlták a klasszikus algoritmusokat.
 
-A CNN-alapú architektúrák (mint a U-Net \cite{ronneberger2015u}) forradalmasították a képszegmentálást, azonban rendelkeznek egy alapvető korláttal: a konvolúciós rétegek lokális receptív mezővel (receptive field) dolgoznak. Ez azt jelenti, hogy a pooling műveletek és a rétegek mélységének növekedésével a jellemzőtérképek (feature map) pozicionális információja fokozatosan elveszik. Habár a U-Net a hidak (skip connection) segítségével megőrzi a korábbi rétegek térbeli részleteit, ezáltal csökkentve az információveszteséget, nem biztosít valódi globális kontextust a mélyebb rétegek számára.
+A CNN-alapú architektúrák (mint a U-Net \cite{ronneberger2015u}) forradalmasították a képszegmentálást, azonban rendelkeznek egy alapvető korláttal: a konvolúciós rétegek lokális receptív mezővel (receptive field) dolgoznak. A konvolúciós rétegek a bemeneti képet egyre kisebb térbeli felbontású, de egyre több csatornát tartalmazó jellemzőtérképekre vetítik. A pooling műveletek (jellemzően max-pooling) lépésről lépésre felezik a térbeli dimenziót: a korai rétegek nagy felbontáson alacsony szintű vizuális mintákat — éleket, textúrákat — kódolnak, a mélyebb rétegek egyre absztraktabb szemantikai tartalmat — testrészeket, alakzatokat — reprezentálnak, azonban egyre durvább térbeli elhelyezéssel. Ennek következtében a jellemzőtérképek pozicionális információja fokozatosan elveszik. Habár a U-Net a hidak (skip connection) segítségével megőrzi a korábbi rétegek térbeli részleteit, ezáltal csökkentve az információveszteséget, nem biztosít valódi globális kontextust a mélyebb rétegek számára.
 
 
 
@@ -256,11 +256,11 @@ A modell architektúrájának két kulcsfontosságú dimenziót kell egyszerre k
 
 Ezen generalista működés eléréséhez a hagyományos felügyelt tanulás túlságosan merev, míg az önfelügyelt tanulás gyakran a vizuális jegyek aránytalan túlhangsúlyozásához vezet. Ezért a Florence-2, úgynevezett multitask tanulási paradigmát alkalmaz. A betanításhoz a fejlesztők létrehozták az FLD-5B adathalmazt, amely 126 millió képet és 5,4 milliárd átfogó annotációt tartalmaz \cite{xiao2024florence}. Ezt a gigászi adathalmazt több specializált modell kollaborációjával generálták. A generalista képesség kulcsa, hogy a betanítás során az eltérő típusú annotációkat egységes szöveges formátumra (textual output) alakítottak át. Így a teljes hálózat egyetlen közös veszteségfüggvénnyel (loss function) optimalizálható.
 
-A feladatokat a hálózat egy szekvenciától-szekvenciáig (sequence-to-sequence) felépítésben, három fő szinten dolgozza fel \cite{xiao2024florence}:
+A modell szekvenciától-szekvenciáig (sequence-to-sequence) architektúrát alkalmaz: a bemenet egy képből és egy szöveges feladatutasításból áll, a kimenet minden esetben tokensorozat. Ez az egységes reprezentáció teszi lehetővé, hogy egyetlen modell, egyetlen veszteségfüggvénnyel három különböző feladatkategóriát kezeljen \cite{xiao2024florence}:
 \begin{itemize}
-    \item \textbf{Képszintű megértés (Image-level understanding):} Osztályozás és átfogó feliratozás (captioning).
-    \item \textbf{Régió/Pixelszintű felismerés (Region/pixel-level recognition):} Objektumok térbeli lokalizációja, például objektumdetektálás és szegmentálás.
-    \item \textbf{Finomhangolt vizuális-szemantikus illesztés (Fine-grained visual-semantic alignment):} Komplex összefüggések keresése a kép régiói és a szöveges promptok között.
+    \item \textbf{Képszintű megértés (Image-level understanding):} osztályozás és átfogó feliratozás (captioning).
+    \item \textbf{Régió- és pixelszintű felismerés (Region/pixel-level recognition):} objektumok térbeli lokalizációja, például objektumdetektálás és szegmentálás.
+    \item \textbf{Finomhangolt vizuális-szemantikus illesztés (Fine-grained visual-semantic alignment):} kép régiói és szöveges promptok közötti összefüggések azonosítása.
 \end{itemize}
 
 A kísérlet során a modell a specifikus \texttt{<REFERRING\_EXPRESSION\_SEGMENTATION>} feladatkódot és a "rat" promptot kapta meg bemenetként.
@@ -359,7 +359,7 @@ A láncolat első eleme a Grounding DINO \cite{liu2024grounding}, amely a Floren
 
 \section{Kísérleti adathalmaz és az értékelés metrikái}
 
-A kutatás specifikus peremfeltételeire a szakirodalomban jelenleg nem áll rendelkezésre megfelelő, előre annotált publikus adathalmaz. Ennek okán a generális modellek empirikus és kvantitatív kiértékelését a később bemutatott, általam annotált és augmentált, 306 kép-maszk párból álló teszthalmazon végeztem el.
+A kutatás specifikus peremfeltételeire a szakirodalomban jelenleg nem áll rendelkezésre megfelelő, előre annotált publikus adathalmaz. Ennek okán a generális modellek empirikus és kvantitatív kiértékelését a később bemutatott, általam annotált, 736 kép-maszk párból álló adathalmazon végeztem el.
 
 A hálózatok szegmentációs teljesítményének objektív összehasonlítására négy különböző, de egymást kiegészítő metrikát alkalmaztam:
 \begin{itemize}
