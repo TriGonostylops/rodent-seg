@@ -116,8 +116,7 @@
 
 {\LARGE\bf Részleges takarásban lévő rágcsálók szegmentálása transzformer modellekkel}
 
-opcionálisan, formázatlanul
-A szakdolgozat angol címe
+Segmentation of Partially Occluded Rodents Using Transformer Models
 
 
 
@@ -139,9 +138,15 @@ XXXXXX BSc hallgató    & egyetemi docens\\
 
 %masodik oldal osszefogalalo
 \begin{abstract}
-A dolgozat tartalmának rövid (max. 1 oldal) összefoglalása. A következő részekből áll: rövid irodalmi összefoglaló, a dolgozat elkészítéséhez használt módszerek, eredmények, konklúzió
+Az etológiai kutatásokban a videós viselkedéselemzés kulcslépése a vizsgált állat automatikus lokalizálása és szegmentálása. Ez a feladat különösen nagy kihívást jelent, ha az állatot a ketrec elemei részlegesen takarják, vagy ha a felvétel éjszaka, infravörös megvilágítás mellett készül.
 
-{\bf Kulcsszavak:} a dolgozat tartalmára specifikusan jellemző 4-6 szó, egymástól vesszővel elválasztva
+Jelen dolgozat a Microsoft Florence-2, a Meta SAM 2 és a Grounded-SAM 2 zero-shot alapmodellek teljesítményét elemzi, majd összehasonlítja őket a feladatra finomhangolt SegFormer transzformer modellekkel. A kiértékeléshez egy tíz kameraállásból, tizennyolc laboratóriumi videóból és 736 manuálisan annotált kép-maszk párból álló, saját adathalmazt állítottam össze.
+
+A kísérletek során a SegFormer B3 architektúrát finomhangoltam súlyozott BCE- és Dice-veszteségfüggvénnyel, valamint kidolgoztam egy kétlépcsős, kaszkádolt rendszert. Ennek első fázisa globálisan lokalizálja a rágcsálót, második fázisa pedig egy nagyított kivágaton végez finomabb szegmentálást.
+
+Az azonos teszthalmazon mért eredmények szerint a legjobb zero-shot modell (SAM 2 Oracle, mIoU: 0{,}64) és a legjobb finomhangolt modell (kétlépcsős SegFormer B3, mIoU: 0{,}76) között közel 12 százalékpontos különbség mutatkozott. A kísérlet igazolja, hogy egyszeri annotációs befektetés árán egy könnyűsúlyú, finomhangolt transzformer modell megbízható és hatékony megoldást nyújt az automatizált etológiai megfigyeléshez.
+
+{\bf Kulcsszavak:} szemantikus szegmentálás, transzformer, rágcsáló, SegFormer, etológia, finomhangolás
 \end{abstract}
 
 
