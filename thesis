@@ -421,9 +421,22 @@ Ezekből az okokból kifolyólag csak a változatos, egyedi testpozíciók és a
 
 A fennmaradó képkockák viselkedési eloszlása eltolódik az aktív, mozgó pózok irányába. Ennek oka, hogy a statikus, pihenő vagy tisztálkodó patkány egymást követő képkockáin a maszkok alig változnak, így eldobásra kerülnek. Ezzel szemben a futó, ugró, nyújtózkodó patkány maszkjai képkockáról képkockára jelentősen eltérnek, így túlélik a szűrést.
 
-Fontos elkülöníteni az \textit{előfeldolgozást} (preprocessing) az \textit{adataugmentációtól} (data augmentation). Az előfeldolgozás determinisztikus, minden halmazra egységesen alkalmazott lépés. A képeket az arány megtartásával 1024$\times$1024 pixeles felbontásra méreteztem, majd fekete keretezéssel (zero-padding) egészítettem ki négyzet alakúra. Erre azért van szükség, mert a neurális hálózat architektúrája rögzített méretű bemenetet vár. A tanító, validációs és teszthalmaz képei egyaránt átesnek rajta.
+A szűrés eredményeként kapott képeket egységes formátumba kell hozni, hogy a
+neurális hálózat architektúrája feldolgozhassa őket. A képeket az arány
+megtartásával 1024$\times$1024 pixeles felbontásra méreteztem, majd fekete
+keretezéssel (zero-padding) egészítettem ki négyzet alakúra. Ez az
+előfeldolgozási lépés determinisztikus és minden halmazra egységesen vonatkozik,
+így a tanító, a validációs és a teszthalmaz képei egyaránt átesnek rajta.
 
-Az adataugmentáció ezzel szemben \textbf{kizárólag a tanítóhalmazra} alkalmazható. Az augmentáció lényege, hogy a meglévő képekből mesterséges variációkat hoz létre geometriai transzformációk (vízszintes tükrözés, forgatás, skálázás) és képpont-szintű zajok (fényerő-kontraszt változtatás, Gauss-zaj) révén, ezáltal megnövelve a modell által látott példák sokféleségét. Ha az augmentációt a validációs vagy teszthalmaz képeire is alkalmaznánk, az mesterségesen torzítaná a kiértékelési metrikákat: a modell nem a valós, éles képeken mért teljesítményét tükrözné az eredmény, hanem a transzformált, soha nem látott variánsokét. Ez félrevezető, hiszen a bevetési körülmények között a kamera nyers képkockáit kell szegmentálni, nem azok tükrözött vagy elforgatott verzióit.
+A tanítóhalmaz esetén az előfeldolgozás után egy további lépés következik.
+A szűrés után megmaradó képekből mesterséges variációkat kell előállítani,
+hogy a modell a valóságban előforduló körülmények minél szélesebb
+spektrumával találkozhassék a tanítás során. Erre szolgál az adataugmentáció,
+amely geometriai transzformációkkal (vízszintes tükrözés, forgatás, skálázás)
+és képpont-szintű zajokkal (fényerő-kontraszt változtatás, Gauss-zaj) bővíti
+a tanítóhalmazt. A validációs és teszthalmaz képeire ez nem vonatkozik, mivel
+a kiértékelés célja a modell valós, transzformálatlan képeken nyújtott
+teljesítményének mérése.
 
 A szűrt tanítóhalmazt az Albumentations könyvtár segítségével augmentáltam. A tanítóhalmazban az albínó felvételek száma elmarad a fekete-fehér felvételektől, így az albínó osztály alulreprezentált. Ennek kompenzálására az augmentáció osztályegyensúly-tudatos módon történt. A pipeline minden patkánytípusra kiszámítja, hogy hányszor kevesebb képkockával rendelkezik a legjobban képviselt osztályhoz képest, és ezt a szorzót alkalmazza az alap hatszoros augmentációs szorzóra. A felső korlát (nyolcszorosnál nem lehet több) megakadályozza, hogy kis mintaszámú osztályok aránytalanul sok, de azonos információtartalmú augmentált példányt kapjanak, ez ugyanis az augmentációs transzformációk mintázatainak megtanulásához, nem a valódi osztályjellemzők elsajátításához vezetne.
 
@@ -487,9 +500,28 @@ A finomhangolás (fine-tuning) során több modellméretet és veszteségfüggv�
 
 \textbf{Veszteségfüggvények (weighted BCE vs. Dice):} A szegmentációs pontosság növelése érdekében két veszteségfüggvényt vizsgáltam. A BCE pixelenként értékeli a predikciót. Mivel a képeken a háttérpixelek száma jóval meghaladja a rágcsáló pixeleinek számát, a háttér osztály súlyát 1,0-ra, a rágcsáló osztályét 5,0-ra állítottam.
 
-A Dice veszteségfüggvény a kiértékelési metrikaként is használt Dice-együttható folytonos változata. A két szerep közt fontos különbség van. Metrikaként a Dice-t a küszöbölés utáni bináris maszkon számítják, ami nem differenciálható. Veszteségfüggvényként azonban a küszöbölés előtti valószínűségi kimeneten számítják, ami lehetővé teszi a gradiens alapú tanítást.
+A Dice veszteségfüggvény a kiértékelési metrikaként is használt Dice-együttható folytonos változata. Metrikaként a Dice-t a küszöbölés utáni bináris maszkon számítják, ami nem differenciálható. Veszteségfüggvényként a küszöbölés előtti valószínűségi kimeneten számítják, ami lehetővé teszi a gradiens alapú tanítást.
 
-A vizuális kiértékelés során nem volt megfigyelhető jelentős különbség a két konfiguráció által generált maszkok minőségében, így a stabilabb konvergenciát biztosító súlyozott BCE maradt a munkafolyamat alapja.
+A vizuális kiértékelés során a két konfiguráció általánosságban hasonló minőségű maszkokat produkált. Egy éjszakai felvételen rögzített esetben azonban a BCE-vel tanított modell elvesztette a rágcsáló kontúrját, míg a Dice változat megtartotta azt, ahogy azt a \ref{fig:bce_dice_night}. ábra szemlélteti. Ez az egyedi megfigyelés nem tekinthető szisztematikus különbségnek, de arra utal, hogy a Dice veszteségfüggvény alacsony kontrasztú, éjszakai felvételeken robusztusabb viselkedést mutathat. A stabilabb konvergenciát biztosító súlyozott BCE maradt a munkafolyamat alapja.
+
+\begin{figure}[hbt!]
+\centering
+\begin{minipage}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{images/segformer-b3-bce-night-loses-rat.png}
+
+    \small BCE: a modell elveszíti a rágcsálót
+\end{minipage}
+\hfill
+\begin{minipage}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{images/segformer-b3-dice-night-tracks-rat.png}
+
+    \small Dice: a modell megtartja a rágcsálót
+\end{minipage}
+\caption{Ugyanazon éjszakai képkockán a BCE veszteségfüggvénnyel tanított modell elveszíti a rágcsáló kontúrját, míg a Dice változat megtartja azt.}
+\label{fig:bce_dice_night}
+\end{figure}
 
 \section{A betanítás (Fine-tuning) hiperparaméterei}
 A kiválasztott SegFormer B3 modell finomhangolása a Kaggle felhőkörnyezetben, NVIDIA Tesla T4 grafikus kártyákon történt. A betanítást az alábbi hiperparaméterekkel végeztem:
@@ -736,12 +768,53 @@ Szeged, \today
 \newpage
 {\Huge \bf Mellékletek}
 
- \addcontentsline{toc}{chapter}{Mellékletek}
+\addcontentsline{toc}{chapter}{Mellékletek}
 
-\vspace{2 cm}
+\vspace{1cm}
 
-(nem kötelező elem, a dolgozat oldalszámaiba nem tartozik bele.), (új oldalon kezdve)
+\begin{figure}[hbt!]
+\centering
+\begin{minipage}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{images/florence2.png}
 
-Ebben a fejezetben lehet elhelyezni a nagyobb táblázatokat, ábrákat, adathalmazokat.
+    \small Tipikus kimenet
+\end{minipage}
+\hfill
+\begin{minipage}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{images/florence2-degenerated.png}
+
+    \small Degenerált maszk
+\end{minipage}
+\caption{Florence-2 kimenete a teszthalmazon. A bal oldali példa a modell tipikus, elfogadható minőségű szegmentációját mutatja. A jobb oldali példa a degenerált maszkot szemlélteti, amelyben a maszk szögletessé válik és elveszíti az állat körvonalát.}
+\label{fig:florence2}
+\end{figure}
+
+\begin{figure}[hbt!]
+\centering
+\includegraphics[width=0.7\textwidth]{images/grounded-sam.png}
+\caption{Grounded-SAM 2 kimenete a teszthalmazon. A Grounding DINO által generált befoglaló doboz alapján a SAM 2 elvégzi a pixelszintű szegmentálást.}
+\label{fig:grounded_sam}
+\end{figure}
+
+\begin{figure}[hbt!]
+\centering
+\begin{minipage}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{images/segformer-b3-bce-night.png}
+
+    \small BCE veszteségfüggvény
+\end{minipage}
+\hfill
+\begin{minipage}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{images/segformer-b3-dice-night.png}
+
+    \small Dice veszteségfüggvény
+\end{minipage}
+\caption{SegFormer B3 tipikus éjszakai kimenetei BCE és Dice veszteségfüggvénnyel.}
+\label{fig:segformer_night}
+\end{figure}
 
 \end{document}
