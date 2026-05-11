@@ -428,7 +428,6 @@ A \textbf{SAM 2 (Oracle)} felállás a legmagasabb összesített mutatókat prod
 
 A \textbf{SAM 2} és \textbf{Grounded-SAM 2} modellek az előzőekkel ellentétes minőségi profilt mutatnak. Kvantitatív mutatóik első ránézésre egyértelműen gyengébbek, a kvalitatív eredmények azonban lényegesen kiegyensúlyozottabb, vizuálisan folyamatosabb videót adnak. A memóriabank mechanizmusa jól megfigyelhető a patkány farkán ahogy a modell egy korábbi, jó minőségű szegmentált képkockájára épít, és azt terjeszti tovább a következőre. Ez a mechanizmus ugyanakkor kétélű: ha a modell egyszer pontatlan maszkra alapoz, a hiba propagálódik. Ez magyarázza a Grounded-SAM 2 látványosan rosszabb átfedési mutatóit, mivel a Grounding DINO detektáló lépés kiesése esetén a SAM 2 maszk-dekódoló sem képes megbízható kimenetet produkálni. A vizsgált zero-shot modellek közül minden felhasználási esetre a Grounded-SAM 2 tűnik optimálisabb választásnak, köszönhetően a kiegyensúlyozottabb és konzisztensebb kimenetének.
 
-Az eredmények egyértelműen rámutatnak a kutatás elsődleges konklúziójára: a vizsgált zero-shot alapmodellek önmagukban, utólagos módosítás nélkül nem képesek megbízhatóan és teljesen automatizáltan megoldani a rágcsáló-szegmentálást egy ilyen specifikus környezetben.
 
 
 
@@ -442,7 +441,7 @@ A teljesen automatizált, emberi beavatkozást nem igénylő és robusztus szegm
 \section{A SegFormer architektúra elméleti háttere}
 A SegFormer egy tisztán térbeli feldolgozást végző, szemantikus szegmentációra optimalizált hálózat. A korábban vizsgált alapmodellekkel ellentétben ez az architektúra nem egy többcélú generalista keretrendszer, hanem kifejezetten egyetlen feladatot lát el maximális hatékonysággal. A bemeneti képet pixelszintű osztálypredikcióra bontja le \cite{xie2021segformer}.
 
-A SegFormer sikerének kulcsa, hogy a transzformerek globális kontextus-megértését ötvözi egy szándékosan minimalista dekódolóval — ez a kombináció teszi egyszerre pontossá és számításilag hatékonnyá \cite{xie2021segformer}. Az architektúra két fő pillérre épül:
+A SegFormer sikerének kulcsa, hogy a transzformerek globális kontextus-megértését ötvözi egy szándékosan minimalista dekódolóval, ami egyszerre teszi pontossá és számításilag hatékonnyá \cite{xie2021segformer}. Az architektúra két fő pillére:
 
 \begin{itemize}
     \item \textbf{Hierarchikus Transzformer Kódoló (Hierarchical Transformer Encoder):} A klasszikus ViT modellek a képet egyetlen, rögzített méretű patch-rácsra bontják, és ezt az egyetlen, változatlan felbontású reprezentációt dolgozzák fel minden rétegben. A SegFormer ezzel szemben négy egymást követő kódolási fokozatot alkalmaz: minden fokozatban csökken a térbeli felbontás, miközben nő a csatornák száma és a jellemzők szemantikai absztrakciós szintje. Az első fokozat még finom textúrákat és éleket kódol nagy felbontáson, a negyedik már kompakt, globális összefüggéseket tartalmaz kis felbontáson \cite{xie2021segformer}.
