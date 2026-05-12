@@ -470,6 +470,13 @@ A kapott mérési eredmények tökéletesen tükrözik a 4. fejezetben felvázol
 
 A teljesen automatizált modellek közül a \textbf{Florence-2} érte el a legmagasabb átfedési mutatókat (mIoU: 0{,}5083), a Hausdorff-távolsága azonban messze a legrosszabb volt (105{,}73 pixel), amely a modell képlékenységére utal. A modell bizonyos képkockákon feszes maszkokat ad, amelyek többnyire pontosan követik a végtagokat. Gyakori azonban, hogy a maszk szögletessé, durvává válik és szélsőértékek között ugrálva teljesen elveszti az állat körvonalát. Néha töredezett maszk esetén egyetlen összefüggő alakzat helyett az egyes testrészeket egymástól független poligonként szegmentálja a modell. Ennél az anomáliánál a maszk hirtelen a tipikus méret sokszorosára terjed ki. A hibás képkockák utólagos szűrés nélkül nem azonosíthatók és a jó minőségű szegmensek közé ékelődve vibrálást okoznak a generált videóban (lásd \ref{fig:florence2}. ábra).
 
+\begin{figure}[hbt!]
+\centering
+\includegraphics[width=\textwidth]{images/florence2-degenerated.png}
+\caption{Florence-2 degenerált maszkja: a maszk szögletessé válik, szélsőértékek között ugrik és elveszíti az állat körvonalát.}
+\label{fig:florence2}
+\end{figure}
+
 A \textbf{SAM 2 (Oracle)} felállás a legmagasabb összesített mutatókat produkálta (mIoU: 0{,}5764, Hausdorff: 53{,}02 pixel), azonban emberi beavatkozást feltételez, ezért teljesen automatizált munkafolyamatba nem illeszthető.
 
 A \textbf{SAM 2} és \textbf{Grounded-SAM 2} modellek az előzőekkel ellentétes minőségi profilt mutatnak. Kvantitatív mutatóik első ránézésre egyértelműen gyengébbek, a kvalitatív eredmények azonban lényegesen kiegyensúlyozottabb, vizuálisan folyamatosabb videót adnak. A memóriabank mechanizmusa jól megfigyelhető a patkány farkán ahogy a modell egy korábbi, jó minőségű szegmentált képkockájára épít, és azt terjeszti tovább a következőre. Ez a mechanizmus ugyanakkor kétélű: ha a modell egyszer pontatlan maszkra alapoz, a hiba propagálódik. Ez magyarázza a Grounded-SAM 2 látványosan rosszabb átfedési mutatóit, mivel a Grounding DINO detektáló lépés kiesése esetén a SAM 2 maszk-dekódoló sem képes megbízható kimenetet produkálni. A vizsgált zero-shot modellek közül minden felhasználási esetre a Grounded-SAM 2 tűnik optimálisabb választásnak, köszönhetően a kiegyensúlyozottabb és konzisztensebb kimenetének.
@@ -503,6 +510,21 @@ A finomhangolás (fine-tuning) során több modellméretet és veszteségfüggv�
 A Dice veszteségfüggvény a kiértékelési metrikaként is használt Dice-együttható folytonos változata. Metrikaként a Dice-t a küszöbölés utáni bináris maszkon számítják, ami nem differenciálható. Veszteségfüggvényként a küszöbölés előtti valószínűségi kimeneten számítják, ami lehetővé teszi a gradiens alapú tanítást.
 
 A vizuális kiértékelés során a két konfiguráció általánosságban hasonló minőségű maszkokat produkált. Egy éjszakai felvételen rögzített esetben azonban a BCE-vel tanított modell elvesztette a rágcsáló kontúrját, míg a Dice változat megtartotta azt, ahogy azt a \ref{fig:bce_dice_night}. ábra szemlélteti. Ez az egyedi megfigyelés nem tekinthető szisztematikus különbségnek, de arra utal, hogy a Dice veszteségfüggvény alacsony kontrasztú, éjszakai felvételeken robusztusabb viselkedést mutathat. A stabilabb konvergenciát biztosító súlyozott BCE maradt a munkafolyamat alapja.
+
+\begin{figure}[hbt!]
+\centering
+\begin{minipage}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{images/segformer-b3-bce-night-loses-rat.png}
+\end{minipage}
+\hfill
+\begin{minipage}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{images/segformer-b3-dice-night-tracks-rat.png}
+\end{minipage}
+\caption{Ugyanazon éjszakai képkockán a BCE veszteségfüggvénnyel tanított modell elveszíti a rágcsáló kontúrját, míg a Dice változat megtartja azt.}
+\label{fig:bce_dice_night}
+\end{figure}
 
 \section{A betanítás (Fine-tuning) hiperparaméterei}
 A kiválasztott SegFormer B3 modell finomhangolása a Kaggle felhőkörnyezetben, NVIDIA Tesla T4 grafikus kártyákon történt. A betanítást az alábbi hiperparaméterekkel végeztem:
@@ -762,13 +784,6 @@ Szeged, \today
 
 \begin{figure}[hbt!]
 \centering
-\includegraphics[width=\textwidth]{images/florence2-degenerated.png}
-\caption{Florence-2 degenerált maszkja: a maszk szögletessé válik, szélsőértékek között ugrik és elveszíti az állat körvonalát.}
-\label{fig:florence2}
-\end{figure}
-
-\begin{figure}[hbt!]
-\centering
 \includegraphics[width=0.7\textwidth]{images/grounded-sam.png}
 \caption{Grounded-SAM 2 kimenete a teszthalmazon. A Grounding DINO által generált befoglaló doboz alapján a SAM 2 elvégzi a pixelszintű szegmentálást.}
 \label{fig:grounded_sam}
@@ -791,21 +806,6 @@ Szeged, \today
 \end{minipage}
 \caption{SegFormer B3 tipikus éjszakai kimenetei BCE és Dice veszteségfüggvénnyel.}
 \label{fig:segformer_night}
-\end{figure}
-
-\begin{figure}[hbt!]
-\centering
-\begin{minipage}{0.48\textwidth}
-    \centering
-    \includegraphics[width=\textwidth]{images/segformer-b3-bce-night-loses-rat.png}
-\end{minipage}
-\hfill
-\begin{minipage}{0.48\textwidth}
-    \centering
-    \includegraphics[width=\textwidth]{images/segformer-b3-dice-night-tracks-rat.png}
-\end{minipage}
-\caption{Ugyanazon éjszakai képkockán a BCE veszteségfüggvénnyel tanított modell elveszíti a rágcsáló kontúrját, míg a Dice változat megtartja azt.}
-\label{fig:bce_dice_night}
 \end{figure}
 
 \end{document}
