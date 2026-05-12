@@ -16,14 +16,21 @@
 %\usetikzlibrary{arrows}
 \usepackage[nobysame]{amsrefs}
 %\usepackage{amsmath}
+\usepackage{mathptmx}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyfoot[R]{\thepage}
+\renewcommand{\headrulewidth}{0pt}
 
 \usepackage{geometry}
- \geometry{
- a4paper,
- total={160mm,247mm},
- left=25mm,
- top=25mm,
- }
+\geometry{
+  a4paper,
+  top=25mm,
+  bottom=25mm,
+  inner=35mm,
+  outer=25mm,
+}
 
 
 \newtheorem{theo}{tétel}[section]
@@ -48,47 +55,6 @@
 
 
 \begin{document}
-\thispagestyle{empty}
-
-\begin{center}
- {\Large A dolgozat formai követelményei}
-\end{center}
-
-\vspace{1 cm}
-
-{\bf Ajánlott oldalszám:}
-\begin{itemize}
-\item BSc szakdolgozat: 20-25 oldal,
-\item MSc diplomamunka: 35-50 oldal
-\item Tanárszakos szakdolgozat: 50000-80000 karakter szóközökkel (lásd. TKK szabályzat)
-\end{itemize}
-
-\vspace{1 cm}
-
-{\bf Másfeles sorköz, sorkizárt, 12-es betű méret (általában Computer Modern), margók: jobb, bal, lent és fent 2,5 cm} (ahogy ez a template van beállítva, az jó).
-
-\vspace{1 cm}
-
-{\bf Kötelező elemei a dolgozatnak}
-\begin{itemize}
-    \item Címlap
-    \item Tartalmi összefoglaló (kivonat)
-    \item Tartalomjegyzék
-    \item \textcolor{red}{Érdemi rész}
-(Szakterület specifikus fejezeteket tartalmaz, kérjük, konzultáljon a témavezetővel, hogy a példában közzétett kísérletes tudományterületeken használt fejezetekből az Ön dolgozatában melyikre van szükség!)
-
-
-
-
-\item Irodalomjegyzék
-
-
-
-
-
-\item Nyilatkozat
-\end{itemize}
-\newpage
 
 
 
@@ -136,18 +102,26 @@ Segmentation of Partially Occluded Rodents Using Transformer Models
 {\Large Szeged\\ \vspace{2mm} 2026}
 \end{center}
 
-%masodik oldal osszefogalalo
-\begin{abstract}
-Az etológiai kutatásokban a videós viselkedéselemzés kulcslépése a vizsgált állat automatikus lokalizálása és szegmentálása. Ez a feladat különösen nagy kihívást jelent, ha az állatot a ketrec elemei részlegesen takarják, vagy ha a felvétel éjszaka készül.
+\newpage
+\thispagestyle{empty}
+\begin{center}
+\vspace*{5cm}
+{\Large\bf Feladatkiírás}\\[1cm]
+{\normalsize [A feladatkiírás ide kerül beillesztésre.]}
+\end{center}
+\newpage
 
-A dolgozat a Microsoft Florence-2, a Meta SAM 2 és a Grounded-SAM 2 zero-shot alapmodellek teljesítményét elemzi, majd összehasonlítja őket a feladatra finomhangolt SegFormer transzformer modellel. A kiértékeléshez egy tíz kameraállásból, tizennyolc laboratóriumi videóból és 736 manuálisan annotált kép-maszk párból álló, saját adathalmazt állítottam össze.
-
-A kísérletek során a SegFormer B3 architektúrát finomhangoltam súlyozott BCE és Dice veszteségfüggvénnyel, valamint kidolgoztam egy kétlépcsős rendszert. Ennek első fázisa lokalizálja a rágcsálót, második fázisa pedig egy nagyított, kivágott képen végez finomabb szegmentálást.
-
-Az azonos teszthalmazon mért eredmények szerint a legjobb zero-shot modell (SAM 2 Oracle, mIoU: 0{,}64) és a legjobb finomhangolt modell (kétlépcsős SegFormer B3, mIoU: 0{,}76) között közel 12 százalékpontos különbség mutatkozott. A kísérlet igazolja, hogy egyszeri annotációs befektetés árán egy könnyűsúlyú, finomhangolt transzformer modell megbízható és hatékony megoldást nyújt az automatizált etológiai megfigyeléshez.
-
-{\bf Kulcsszavak:} szemantikus szegmentálás, transzformer, rágcsáló, SegFormer,  finomhangolás
-\end{abstract}
+%\begin{abstract}
+%Az etológiai kutatásokban a videós viselkedéselemzés kulcslépése a vizsgált állat automatikus lokalizálása és szegmentálása. Ez a feladat különösen nagy kihívást jelent, ha az állatot a ketrec elemei részlegesen takarják, vagy ha a felvétel éjszaka készül.
+%
+%A dolgozat a Microsoft Florence-2, a Meta SAM 2 és a Grounded-SAM 2 zero-shot alapmodellek teljesítményét elemzi, majd összehasonlítja őket a feladatra finomhangolt SegFormer transzformer modellel. A kiértékeléshez egy tíz kameraállásból, tizennyolc laboratóriumi videóból és 736 manuálisan annotált kép-maszk párból álló, saját adathalmazt állítottam össze.
+%
+%A kísérletek során a SegFormer B3 architektúrát finomhangoltam súlyozott BCE és Dice veszteségfüggvénnyel, valamint kidolgoztam egy kétlépcsős rendszert. Ennek első fázisa lokalizálja a rágcsálót, második fázisa pedig egy nagyított, kivágott képen végez finomabb szegmentálást.
+%
+%Az azonos teszthalmazon mért eredmények szerint a legjobb zero-shot modell (SAM 2, mIoU: 0{,}64) és a legjobb finomhangolt modell (kétlépcsős SegFormer B3, mIoU: 0{,}76) között közel 12 százalékpontos különbség mutatkozott. A kísérlet igazolja, hogy egyszeri annotációs befektetés árán egy könnyűsúlyú, finomhangolt transzformer modell megbízható és hatékony megoldást nyújt az automatizált etológiai megfigyeléshez.
+%
+%{\bf Kulcsszavak:} szemantikus szegmentálás, transzformer, rágcsáló, SegFormer,  finomhangolás
+%\end{abstract}
 
 
 
@@ -331,7 +305,7 @@ Ebből az architekturális döntésből két kritikus limitáció fakad a rágcs
 
 
 
-\subsection{Segment Anything Model 2 (SAM 2) - Oracle Prompt}
+\subsection{Segment Anything Model 2 (SAM 2) – Manuális Prompt}
 
 A Meta által publikált SAM 2 \cite{ravi2024sam2} egy interaktív, pixelszintű szegmentációs alapmodell, amelyet kifejezetten videós feladatokra és az azzal járó dinamikus kihívások kezelésére terveztek.
 
@@ -444,10 +418,10 @@ A szűrt tanítóhalmazt az Albumentations könyvtár segítségével augmentál
 
 
 
-Az előre betanított, zero-shot módon (finomhangolás nélkül) tesztelt modellek eredményeit az \ref{tab:zero_shot_results}. táblázat foglalja össze.
+Az előre betanított alapmodellek eredményeit az \ref{tab:zero_shot_results}. táblázat foglalja össze. A Florence-2 és a Grounded-SAM 2 teljesen automatizált, zero-shot módon fut; a SAM 2 manuális befoglaló doboz promptot igényel.
 \begin{table}[hbt!]
 \centering
-\caption{A vizsgált zero-shot modellek kvantitatív összehasonlítása az etológiai adathalmazon}
+\caption{A vizsgált alapmodellek kvantitatív összehasonlítása az etológiai adathalmazon}
 
 
 \label{tab:zero_shot_results}
@@ -458,7 +432,7 @@ Az előre betanított, zero-shot módon (finomhangolás nélkül) tesztelt model
 \hline
 Florence-2 & 0.5083 & 0.6225 & 0.2146 & 105.7337 \\
 Grounded-SAM 2 & 0.4061 & 0.4740 & 0.1775 & 69.7024 \\
-SAM 2 (Oracle) & 0.5764 & 0.7075 & 0.2488 & 53.0209 \\
+SAM 2 & 0.5764 & 0.7075 & 0.2488 & 53.0209 \\
 \hline
 \end{tabular}%
 }
@@ -472,12 +446,20 @@ A teljesen automatizált modellek közül a \textbf{Florence-2} érte el a legma
 
 \begin{figure}[hbt!]
 \centering
-\includegraphics[width=\textwidth]{images/florence2-degenerated.png}
-\caption{Florence-2 degenerált maszkja: a maszk szögletessé válik, szélsőértékek között ugrik és elveszíti az állat körvonalát.}
+\begin{minipage}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{images/florence2.png}
+\end{minipage}
+\hfill
+\begin{minipage}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{images/florence2-degenerated.png}
+\end{minipage}
+\caption{Florence-2 kimenete a teszthalmazon: tipikus eset (bal) és degenerált maszk (jobb), amelyen a kontúr szögletessé válik, szélsőértékek között ugrik és elveszíti az állat körvonalát.}
 \label{fig:florence2}
 \end{figure}
 
-A \textbf{SAM 2 (Oracle)} felállás a legmagasabb összesített mutatókat produkálta (mIoU: 0{,}5764, Hausdorff: 53{,}02 pixel), azonban emberi beavatkozást feltételez, ezért teljesen automatizált munkafolyamatba nem illeszthető.
+A \textbf{SAM 2} felállás a legmagasabb összesített mutatókat produkálta (mIoU: 0{,}5764, Hausdorff: 53{,}02 pixel), azonban emberi beavatkozást feltételez, ezért teljesen automatizált munkafolyamatba nem illeszthető.
 
 A \textbf{SAM 2} és \textbf{Grounded-SAM 2} modellek az előzőekkel ellentétes minőségi profilt mutatnak. Kvantitatív mutatóik első ránézésre egyértelműen gyengébbek, a kvalitatív eredmények azonban lényegesen kiegyensúlyozottabb, vizuálisan folyamatosabb videót adnak. A memóriabank mechanizmusa jól megfigyelhető a patkány farkán ahogy a modell egy korábbi, jó minőségű szegmentált képkockájára épít, és azt terjeszti tovább a következőre. Ez a mechanizmus ugyanakkor kétélű: ha a modell egyszer pontatlan maszkra alapoz, a hiba propagálódik. Ez magyarázza a Grounded-SAM 2 látványosan rosszabb átfedési mutatóit, mivel a Grounding DINO detektáló lépés kiesése esetén a SAM 2 maszk-dekódoló sem képes megbízható kimenetet produkálni. A vizsgált zero-shot modellek közül minden felhasználási esetre a Grounded-SAM 2 tűnik optimálisabb választásnak, köszönhetően a kiegyensúlyozottabb és konzisztensebb kimenetének.
 
@@ -531,7 +513,7 @@ A kiválasztott SegFormer B3 modell finomhangolása a Kaggle felhőkörnyezetben
 \begin{itemize}
     \item \textbf{Optimalizáló és tanulási ráta:} AdamW optimalizálót alkalmaztam, $6 \times 10^{-5}$ értékű kezdeti tanulási rátával (learning rate).
     \item \textbf{Tanítási ciklusok (Epochs):} A modell összesen 30 epochon keresztül tanult.
-    \item \textbf{Kötegelt feldolgozás (Batch size \& Gradient Accumulation):} A magas (1024x1024) felbontás miatti hardveres korlátok áthidalására a \textit{batch size} értékét 1-re csökkentettem, amelyet 16-os gradiens akkumulációval (gradient accumulation) egészítettem ki, így biztosítva a stabil tanulást és a memóriakorlátok betartását.
+    \item \textbf{Kötegelt feldolgozás (Batch size \& Gradient Accumulation):} A magas (1024x1024) felbontás miatti hardveres korlátok áthidalására a batch size értékét 1-re csökkentettem, amelyet 16-os gradiens akkumulációval (gradient accumulation) egészítettem ki, így biztosítva a stabil tanulást és a memóriakorlátok betartását.
 \end{itemize}
 
 \section{A kétlépcsős (Cascaded) "Nagyító" Architektúra}
@@ -565,7 +547,7 @@ SegFormer B3 (kétlépcsős)       & 0.7625 & 0.8559 & 0.4142 & 52.8469 \\
 }
 \end{table}
 
-A kétlépcsős architektúra minden metrikában a legjobb eredményt érte el. A legmagasabb mIoU (0.7625) és Boundary IoU (0.4142) értékeket, valamint a legalacsonyabb Hausdorff-távolságot (52.85 px) produkálta. Ez igazolja, hogy a finomabb térbeli részletekre fókuszáló második lépés érdemben javítja a kontúrok pontosságát. Ugyanakkor a kétlépcsős rendszer videón vizsgálva egy gyakorlati hátrányt mutat. A befoglaló doboz keret-keret közötti ingadozása \textit{vibrálást} (flickering) okoz a maszk pozíciójában, ami az egylépéses modellnél nem figyelhető meg. Ez azt jelenti, hogy a számszerű fölény ellenére a kétlépcsős megközelítés nem tekinthető egyértelműen jobb választásnak az egylépéses modellekkel szemben. A két architektúra között kompromisszumot kell kötni a statikus pontosság és a temporális stabilitás között.
+A kétlépcsős architektúra minden metrikában a legjobb eredményt érte el. A legmagasabb mIoU (0.7625) és Boundary IoU (0.4142) értékeket, valamint a legalacsonyabb Hausdorff-távolságot (52.85 px) produkálta. Ez igazolja, hogy a finomabb térbeli részletekre fókuszáló második lépés érdemben javítja a kontúrok pontosságát. Ugyanakkor a kétlépcsős rendszer videón vizsgálva egy gyakorlati hátrányt mutat. A befoglaló doboz keret-keret közötti ingadozása vibrálást (flickering) okoz a maszk pozíciójában, ami az egylépéses modellnél nem figyelhető meg. Ez azt jelenti, hogy a számszerű fölény ellenére a kétlépcsős megközelítés nem tekinthető egyértelműen jobb választásnak az egylépéses modellekkel szemben. A két architektúra között kompromisszumot kell kötni a statikus pontosság és a temporális stabilitás között.
 
 \section{Összehasonlítás a zero-shot modellekkel}
 
@@ -573,7 +555,7 @@ Az \ref{tab:comparison_results}. táblázat a finomhangolt modellek és a zero-s
 
 \begin{table}[hbt!]
 \centering
-\caption{Zero-shot és finomhangolt modellek összehasonlítása azonos teszthalmazon}
+\caption{Alapmodellek és finomhangolt modellek összehasonlítása azonos teszthalmazon}
 \label{tab:comparison_results}
 \resizebox{\textwidth}{!}{%
 \begin{tabular}{llrrrr}
@@ -582,7 +564,7 @@ Az \ref{tab:comparison_results}. táblázat a finomhangolt modellek és a zero-s
 \hline
 Zero-shot & Florence-2              & 0.6014 & 0.7069 & 0.2815 & 98.7136 \\
 Zero-shot & Grounded-SAM 2          & 0.4674 & 0.5284 & 0.2304 & 67.4890 \\
-Zero-shot & SAM 2 (Oracle)          & 0.6442 & 0.7686 & 0.3074 & 52.4781 \\
+Manuális & SAM 2          & 0.6442 & 0.7686 & 0.3074 & 52.4781 \\
 \hline
 Finomhangolt & SegFormer B5 (BCE, 512px)    & 0.6640 & 0.7928 & 0.2085 & 54.7074 \\
 Finomhangolt & SegFormer B3 (BCE)           & 0.7425 & 0.8435 & 0.3447 & 57.3930 \\
@@ -593,19 +575,19 @@ Finomhangolt & SegFormer B3 (kétlépcsős)   & 0.7625 & 0.8559 & 0.4142 & 52.84
 }
 \end{table}
 
-A finomhangolt modellek minden esetben felülmúlták a zero-shot megközelítéseket az átfedési metrikák (mIoU, Dice, Boundary IoU) tekintetében. A leggyengébb finomhangolt modell (BCE loss, mIoU: 0.7425) is 15 százalékponttal haladja meg a legjobb automatizált zero-shot rendszert (SAM 2 Oracle, mIoU: 0.6442).
+A finomhangolt modellek minden esetben felülmúlták a zero-shot megközelítéseket az átfedési metrikák (mIoU, Dice, Boundary IoU) tekintetében. A leggyengébb finomhangolt modell (BCE loss, mIoU: 0.7425) is 15 százalékponttal haladja meg a legjobb alapmodellt (SAM 2, mIoU: 0.6442).
 
 \newpage
 \chapter{Következtetés}
 A dolgozat célja egy teljesen automatizált, képkocka-szintű rágcsáló-szegmentáló rendszer kidolgozása volt, amely etológiai videófelvételeken képes megbízhatóan és emberi beavatkozás nélkül körülhatárolni a vizsgált állatot.
 
-Az \ref{tab:comparison_results}. táblázatban összefoglalt eredmények egyértelműen igazolják, hogy a finomhangolt, feladatspecifikus modellek lényegesen felülmúlják az általános célú alapmodelleket ezen a szűk tartományon. A leggyengébb finomhangolt változat (BCE veszteségfüggvénnyel, mIoU: 0.7425) is közel 15 százalékponttal haladja meg a legjobb automatizált zero-shot rendszert (SAM 2 Oracle, mIoU: 0.6442).
+Az \ref{tab:comparison_results}. táblázatban összefoglalt eredmények egyértelműen igazolják, hogy a finomhangolt, feladatspecifikus modellek lényegesen felülmúlják az általános célú alapmodelleket ezen a szűk tartományon. A leggyengébb finomhangolt változat (BCE veszteségfüggvénnyel, mIoU: 0.7425) is közel 15 százalékponttal haladja meg a legjobb alapmodellt (SAM 2, mIoU: 0.6442).
 
 A két megközelítés között azonban lényeges rendszertani különbség áll fenn, amelyet érdemes mérlegelni. A \textbf{könnyűsúlyú, feladatspecifikus modell} (SegFormer B3, $\approx$47M paraméter) gyors inferenciát biztosít, és a célfeladaton kiemelkedő teljesítményt nyújt, ugyanakkor tartományspecifikus, kézzel annotált betanító adathalmazt igényel. Ez egyszeri, de nem elhanyagolható befektetés. Ezzel szemben a \textbf{nehézebb, általános célú alapmodellek} (Florence-2: $\approx$800M, SAM 2: $\approx$300M paraméter) semmilyen annotálást vagy finomhangolást nem igényelnek, és ismeretlen feladatokra is rugalmasan alkalmazhatók. Hátránya, hogy szűk, specializált tartományban lényegesen alacsonyabb szegmentációs pontosságot érnek el, a Florence-2 esetén pedig degenerált maszkok is megjelenhetnek.
 
 Visszatérő, automatizált laboratóriumi munkafolyamat esetén az egyszeri annotációs befektetés egyértelműen megtérül, és a finomhangolt modell stabilan és hatékonyan üzemeltethető. Egyszeri, exploratív vagy ismeretlen körülmények közötti alkalmazásnál az általános célú alapmodellek kínálhatnak gyorsabb megoldást, még ha kisebb pontosság árán is.
 
-A kétlépcsős architektúra kvantitatív eredményei a legjobbak, ugyanakkor videós alkalmazásban gyakorlati korlátot jelent a befoglaló doboz keret-keret közötti ingadozásából eredő \textit{vibrálás} (flickering). A maszk pozíciója képkockáról képkockára hirtelen változhat. Az egylépéses modell ezzel szemben kedvezőbb kompromisszumot kínál a statikus szegmentációs pontosság és a temporális stabilitás között.
+A kétlépcsős architektúra kvantitatív eredményei a legjobbak, ugyanakkor videós alkalmazásban gyakorlati korlátot jelent a befoglaló doboz keret-keret közötti ingadozásából eredő vibrálás (flickering). A maszk pozíciója képkockáról képkockára hirtelen változhat. Az egylépéses modell ezzel szemben kedvezőbb kompromisszumot kínál a statikus szegmentációs pontosság és a temporális stabilitás között.
 
 Összességében a kutatás igazolja, hogy könnyűsúlyú, finomhangolt transzformer-alapú szegmentáció életképes és hatékony megoldás az automatizált etológiai megfigyeléshez, feltéve, hogy rendelkezésre áll a szükséges tartományspecifikus annotált adathalmaz.
 
@@ -752,7 +734,9 @@ A kétlépcsős architektúra kvantitatív eredményei a legjobbak, ugyanakkor v
 
 {\it A szöveg kötött, kérjük ezt használni!}
 
-Alulírott, Végzős Edömér, xxxx szakos hallgató, kijelentem, hogy a szakdolgozatban ismertetettek saját munkám eredményei, és minden felhasznált, nem saját munkából származó eredmény esetén hivatkozással jelöltem annak forrását.
+Alulírott Balázsi Márton üzemmérnök-informatika szakos hallgató, kijelentem, hogy a dolgozatomat a Szegedi Tudományegyetem, Informatikai Intézet ……………………….. Tanszékén készítettem, …………………….…….…… diploma megszerzése érdekében.
+Kijelentem, hogy a dolgozatot más szakon korábban nem védtem meg, saját munkám eredménye, és csak a hivatkozott forrásokat (szakirodalom, eszközök, stb.) használtam fel. Tudomásul veszem, hogy szakdolgozatomat / diplomamunkámat a Szegedi Tudományegyetem Diplomamunka Repozitóriumában tárolja.
+
 
 
 \begin{flushleft}
@@ -774,13 +758,6 @@ Szeged, \today
 \addcontentsline{toc}{chapter}{Mellékletek}
 
 \vspace{1cm}
-
-\begin{figure}[hbt!]
-\centering
-\includegraphics[width=\textwidth]{images/florence2.png}
-\caption{Florence-2 tipikus kimenete a teszthalmazon.}
-\label{fig:florence2_normal}
-\end{figure}
 
 \begin{figure}[hbt!]
 \centering
