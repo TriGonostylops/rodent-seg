@@ -515,7 +515,7 @@ A finomhangolás (fine-tuning) során több modellméretet és veszteségfüggv�
 
 A kvantitatív kiértékelés a 92 képkockás teszthalmazon (lásd \ref{tab:finetuned_results}. táblázat) nagyon hasonló eredményt mutat a két konfiguráció között, a BCE mIoU értéke 0,7425, a Dice-é 0,7452. A teszthalmaz mérete alapján ez az eltérés nem tekinthető szisztematikusan szignifikánsnak. A hosszabb tesztvideókon végzett kvalitatív elemzés sem hozott egyértelmű döntést.
 
-Éjszakai, alacsony kontrasztú felvételeken azonban megfigyelhető volt, hogy a BCE-vel tanított modell egyes képkockákon elveszíti a rágcsáló kontúrját, míg a Dice változat megtartja azt, ahogy azt a \ref{fig:bce_dice_night}. ábra szemlélteti.
+Éjszakai, alacsony kontrasztú felvételeken azonban megfigyelhető volt, hogy a BCE-vel tanított modell egyes képkockákon elveszíti a rágcsálót, míg a Dice változat követi azt, ahogy a \ref{fig:bce_dice_night}. ábra szemlélteti.
 
 \begin{figure}[hbt!]
 \centering
@@ -553,11 +553,10 @@ Ez nem egyedi jelenség. A \ref{fig:dice_better_night_2}. ábra egy másik éjsz
 
     \small Dice veszteségfüggvény
 \end{minipage}
-\caption{Egy másik éjszakai képkockán szintén megfigyelhető, hogy a BCE-vel tanított modell elveszíti a rágcsáló kontúrját, míg a Dice változat megtartja azt.}
-\label{fig:dice_better_night_2}
+
 \end{figure}
 
-Albínó rágcsálón rögzített felvételeknél ezzel szemben nem rajzolódott ki ilyen egyértelmű tendencia. A \ref{fig:bce_better_albino}. ábra egy olyan esetet mutat, ahol a BCE ad pontosabb maszkot, ugyanakkor fordított irányú példák is előfordulnak. A két veszteségfüggvény között kvalitatív szempontból albínó esetén nincs következetes különbség.
+Albínó rágcsálón rögzített felvételeknél ezzel szemben nem rajzolódott ki ilyen egyértelmű tendencia. A \ref{fig:bce_better_albino}. ábra egy olyan esetet mutat, ahol jellemzően a BCE ad pontosabb maszkot. A két veszteségfüggvény között kvalitatív szempontból albínó esetén nincs következetes különbség, a hibák hasonló képkockáknál lépnek fel. A probléma itt sem a patkány elvesztése, inkább a takarásból fakadó ismeretlenek összekötése és hallucináció.
 
 \begin{figure}[hbt!]
 \centering
@@ -578,15 +577,8 @@ Albínó rágcsálón rögzített felvételeknél ezzel szemben nem rajzolódott
 \label{fig:bce_better_albino}
 \end{figure}
 
+A két veszteségfüggvény
 A fentiek alapján a stabilabb konvergenciát biztosító súlyozott BCE maradt a munkafolyamat alapja.
-
-\section{A betanítás (Fine-tuning) hiperparaméterei}
-A kiválasztott SegFormer B3 modell finomhangolása a Kaggle felhőkörnyezetben, NVIDIA Tesla T4 grafikus kártyákon történt. A betanítást az alábbi hiperparaméterekkel végeztem:
-\begin{itemize}
-    \item \textbf{Optimalizáló és tanulási ráta:} AdamW optimalizálót alkalmaztam, $6 \times 10^{-5}$ értékű kezdeti tanulási rátával (learning rate).
-    \item \textbf{Tanítási ciklusok (Epochs):} A modell összesen 30 epochon keresztül tanult.
-    \item \textbf{Kötegelt feldolgozás (Batch size \& Gradient Accumulation):} A magas (1024x1024) felbontás miatti hardveres korlátok áthidalására a batch size értékét 1-re csökkentettem, amelyet 16-os gradiens akkumulációval (gradient accumulation) egészítettem ki, így biztosítva a stabil tanulást és a memóriakorlátok betartását.
-\end{itemize}
 
 \section{A kétlépcsős (Cascaded) "Nagyító" Architektúra}
 Bár az alapszintű SegFormer robusztusan ismerte fel az állatot, a maszkok körvonalai a nagy felbontású, de globális nézet miatt esetenként nem voltak elég feszesek. Ezen probléma orvoslására a kétlépcsős, kaszkádolt (coarse-to-fine) rendszert alakítottam ki.
@@ -596,6 +588,8 @@ A rendszer két független SegFormer modellt integrál:
     \item \textbf{Globális Lokalizációs Modell (Stage 1):} Az első hálózat a teljes (1024x1024) felvételt kapja meg bemenetként. Elsődleges feladata nem a tökéletes maszkolás, hanem a rágcsáló biztonságos lokalizálása a ketrecben. A prediktált maszk alapján a rendszer kiszámít egy befoglaló dobozt.
     \item \textbf{Lokális Szakértői Modell (Stage 2):} Az eredeti képből a befoglaló doboz alapján kivágjuk (crop) a rágcsálót. A vágás előtt a befoglaló dobozt minden irányban 25\%-kal kibővítjük, majd négyzetesre igazítjuk. A kivágott régiót Lanczos-interpolációval 512$\times$512 pixelre skálázzuk. Ezt a szorosan vágott, kizárólag a patkányt tartalmazó képrészletet kapja meg a második, kifejezetten erre a „nagyított" nézetre finomhangolt modell, amelynek tanulási rátája $3 \times 10^{-5}$ (az első lépcsős $6 \times 10^{-5}$-del szemben).
 \end{enumerate}
+
+A két lépcsőhöz eltérő valószínűségi küszöböket alkalmaztam. Az első lépcső 0,30-as küszöbértékkel dolgozik, hogy a befoglaló doboz kiszámításához szükséges durva maszk biztosan tartalmazza az állat teljes kiterjedését, még akkor is, ha egyes testrészek valószínűsége viszonylag alacsony. A második lépcső kimenetét szigorúbb, 0,60-as küszöbértékkel binárisítjuk, mivel a szorosan vágott, patkánytestközpontú bemeneten a háttér aránya lényegesen kisebb, az esetlegesen magas valószínűséget kapó háttérpixelek száma is csekélyebb. Az így kapott teljes felbontású maszkon egy további utófeldolgozási lépést alkalmazunk: az összes összefüggő komponens közül kizárólag a legnagyobb területű marad meg, a kisebb szigetek eldobásra kerülnek. Ez az ún. Highlander-szabály kizárja a ketrec rácsain, vagy a kamerakép peremén keletkező apró szürkeárnyalatos foltokat, amelyek téves pozitív detektálásként jelennének meg a végső maszkban.
 
 \section{A finomhangolt modellek kvantitatív kiértékelése}
 
@@ -620,7 +614,7 @@ SegFormer B3 (kétlépcsős, Dice loss) & 0.7675 & 0.8618 & 0.4149 & 62.3083 \\
 }
 \end{table}
 
-A kétlépcsős architektúra mindkét konfigurációban felülmúlja az egylépéses modelleket. A BCE-vel tanított változat érte el a legjobb Hausdorff-távolságot (52.85 px) és Boundary IoU értéket (0.4142), míg a Dice veszteségfüggvénnyel tanított változat magasabb mIoU értéket produkált (0.7675), de gyengébb Hausdorff-távolsággal (62.31 px). Ez igazolja, hogy a finomabb térbeli részletekre fókuszáló második lépés érdemben javítja a kontúrok pontosságát. Ugyanakkor a kétlépcsős rendszer videón vizsgálva több gyakorlati hátrányt mutat. A befoglaló doboz keret-keret közötti ingadozása vibrálást (flickering) okoz a maszk pozíciójában, ami az egylépéses modellnél nem figyelhető meg. Éjszakai felvételeken ez különösen zavaró, mivel az élénk színű maszk folyamatos pozíció- és alakváltozása szemmel követve kellemetlen vizuális hatást kelt. További korlát, hogy ha a rágcsáló a ketrec kamerához közeli falára mászik, a perspektíva torzítása miatt az állat a képen a valóságosnál sokszorosannak tűnő kiterjedéssel jelenik meg. Ilyenkor a stage 1 modell befoglaló doboza a képkeret nagy részét lefedi, a stage 2 modell számára előállított felnagyított képszelvény nem tartalmaz érdemi pluszinformációt a teljes felbontású bemenethez képest, ahogy azt a \ref{fig:close_rat_magnified}. ábra szemlélteti.
+A kétlépcsős architektúra mindkét konfigurációban felülmúlja az egylépéses modelleket. A BCE-vel tanított változat érte el a legjobb Hausdorff-távolságot (52.85 px) és Boundary IoU értéket (0.4142), míg a Dice veszteségfüggvénnyel tanított változat magasabb mIoU értéket produkált (0.7675), de gyengébb Hausdorff-távolsággal (62.31 px). Ez igazolja, hogy a finomabb térbeli részletekre fókuszáló második lépés érdemben javítja a kontúrok pontosságát. Ugyanakkor a kétlépcsős rendszer videón vizsgálva több gyakorlati hátrányt mutat. A befoglaló doboz keret-keret közötti ingadozása vibrálást (flickering) okoz a maszk pozíciójában, ami az egylépéses modellnél nem figyelhető meg. Éjszakai felvételeken ez különösen zavaró, mivel az élénk színű maszk folyamatos pozíció és alakváltozása szemmel követve kellemetlen vizuális hatást kelt. További korlát a nagyítás számára, hogy ha a rágcsáló a ketrec kamerához közeli falára mászik akkor a nagyító lépés elveszti előnyösségét és nem biztos, hogy érdemi információt nyer ki a modell, ahogy azt a \ref{fig:close_rat_magnified}. ábra szemlélteti. Az is előfordulhat, hogy egyéb takaró tárgy miatt már rögtön a keretező modell eltéveszti a patkányt és a nagyító modell már nem fog tudni korrigálni, de utóbbit nem ez okozta. Az első lépésben kapott maszkok hiánytalanok.
 
 \begin{figure}[hbt!]
 \centering
@@ -637,20 +631,29 @@ Albínó egyedek esetén a kétlépcsős modell teljesítménye erősen függ az
     \centering
     \includegraphics[width=\textwidth]{images/bce-magnify-better-with-albino.png}
 
-    \small Sötét háttér, megfelelő kontraszt
+    \small A súlyozott BCE veszteségfüggvény alapú kétlépcsős modell megtalálja és precízen maszkot készít.
 \end{minipage}
 \hfill
 \begin{minipage}{0.48\textwidth}
     \centering
     \includegraphics[width=\textwidth]{images/bce-magnify-better-with-albino-dice.png}
 
-    \small Világos, reflektív háttér
+    \small A dice alapú keretezés az első lépésnél zátonyra fut, és tévesen jelöl ki területet a nagyító számára.
 \end{minipage}
 \caption{A kétlépcsős modell albínó rágcsáló szegmentációja sötét és világos háttér előtt. Sötét háttéren az előtér-háttér kontraszt elegendő a pontos maszkoláshoz, reflektív, világos háttér esetén a modell nem ad konzisztens eredményt.}
 \label{fig:albino_contrast}
 \end{figure}
 
 Ha azonban a ketrec aljzatán vagy falain reflektív, világos felületek találhatók, a modell elveszíti az állatot, a maszk képkockáról képkockára látványosan eltérő helyre kerül. A számszerű fölény ellenére a kétlépcsős megközelítés ezért nem tekinthető egyértelműen jobb választásnak az egylépéses modellekkel szemben. A két architektúra között kompromisszumot kell kötni a statikus pontosság és a temporális stabilitás között.
+
+
+\section{A betanítás (Fine-tuning) hiperparaméterei}
+A kiválasztott SegFormer B3 modell finomhangolása a Kaggle felhőkörnyezetben, NVIDIA Tesla T4 grafikus kártyákon történt. A betanítást az alábbi hiperparaméterekkel végeztem:
+\begin{itemize}
+    \item \textbf{Optimalizáló és tanulási ráta:} AdamW optimalizálót alkalmaztam, $6 \times 10^{-5}$ értékű kezdeti tanulási rátával (learning rate).
+    \item \textbf{Tanítási ciklusok (Epochs):} A modell összesen 30 epochon keresztül tanult.
+    \item \textbf{Kötegelt feldolgozás (Batch size \& Gradient Accumulation):} A magas (1024x1024) felbontás miatti hardveres korlátok áthidalására a batch size értékét 1-re csökkentettem, amelyet 16-os gradiens akkumulációval (gradient accumulation) egészítettem ki, így biztosítva a stabil tanulást és a memóriakorlátok betartását.
+\end{itemize}
 
 \section{Összehasonlítás a zero-shot modellekkel}
 
@@ -682,6 +685,20 @@ Finomhangolt & SegFormer B3 (kétlépcsős, Dice) & 0.7675 & 0.8618 & 0.4149 & 6
 A finomhangolt modellek minden esetben felülmúlták a zero-shot megközelítéseket az átfedési metrikák (mIoU, Dice, Boundary IoU) tekintetében. A leggyengébb finomhangolt modell (BCE loss) mIoU értéke 0.7425, ami 15 százalékponttal haladja meg a legjobb alapmodell (SAM 2, mIoU 0.6442) teljesítményét.
 
 \newpage
+\chapter{Jövőbeli fejlesztési lehetőségek}
+
+Az elvégzett kísérletek több olyan irányt is kijelöltek, amelyek mentén a rendszer teljesítménye és alkalmazhatósága tovább növelhető.
+
+\textbf{Memória-alapú temporális követés.}
+A jelenlegi rendszer képkockánként önállóan dönt, ami a kétlépcsős architektúrában vibrálást (flickering) okoz, ha a befoglaló doboz pozíciója keret-keret között ingadozik. Egy lehetséges megoldás, hogy a modell a predikció során nemcsak az aktuális képkocka tartalmát, hanem korábbi, magas megbízhatóságú képkockák vizuális memóriáját is figyelembe veszi. Ha a rendszer azokat a képkockákat, amelyeken a predikció valószínűsége egyértelműen magas (például tiszta, takarás nélküli felvételek), vizuális referenciaként tárolja, ezek az ankerek az alacsony kontrasztú vagy elmosódott képkockákon nyújtott szegmentációt stabilizálhatják. Ez a megközelítés rokon a SAM 2 kereszt-képkocka memória-figyelemmechanizmusával, amely videós üzemmódban a korábbi képkockák jellemzőit használja a jelen képkocka szegmentálásának kontextusává. A meglévő SegFormer-alapú pipeline-ba ez viszonylag kevés módosítással integrálható lenne, mivel csak az inferenciaszintű memóriakezelést érinti, a modelltanítást nem.
+
+\textbf{Augmentációs stratégia és adathalmaz-menedzsment finomítása.}
+Az aktuális osztályegyensúly-korrekció kizárólag a patkánytípus (albínó vs. fekete-fehér) szerinti alulreprezentáltságot veszi figyelembe. Egy többdimenziós kiegyensúlyozó stratégia, amely egyszerre kezeli a patkánytípust, a napszakot (nappal vs. éjszaka) és a ketrecen belüli térbeli pozíciót, pontosabban tükrözné a valós üzemelési eloszlást, és csökkenthetné a modell elfogultságát egyes testtartás- vagy pozíciókategóriákkal szemben. A feldolgozási pipeline \texttt{src/stats.py} modulja már most is számol 3$\times$3-as térbeli rácsstatisztikákat, kompaktság- és területhisztogramokat, amelyek automatikus adathalmaz-audithoz felhasználhatók: ezek alapján azonosíthatók az alulreprezentált pózkategóriák, és prioritizálható a jövőbeli annotációs munka.
+
+\textbf{Integráció viselkedéselemző szoftverekkel.}
+A szegmentációs maszk önmagában közbenső termék. Az etológiai kutatás valódi célja az állat teljes megfigyelési ülés alatti mozgásának, testtartásának és viselkedésének kvantitatív jellemzése. A rendszer kimenetét DeepLabCut-tal (pontspecifikus testpont-követés) vagy BORIS-szal (viselkedési annotációs szoftver) összekapcsolva a nyyers videófelvételből emberi beavatkozás nélkül állíthatók elő statisztikák. A Highlander-szabály utófeldolgozásával kapott egybefüggő, egyetlen komponensből álló maszk alkalmas közvetlen bemenetként ilyen downstream eszközök számára.
+
+\newpage
 \chapter{Következtetés}
 A dolgozat célja egy teljesen automatizált, képkocka-szintű rágcsáló-szegmentáló rendszer kidolgozása volt, amely etológiai videófelvételeken képes megbízhatóan és emberi beavatkozás nélkül körülhatárolni a vizsgált állatot.
 
@@ -694,6 +711,10 @@ Visszatérő, automatizált laboratóriumi munkafolyamat esetén az egyszeri ann
 A kétlépcsős architektúra kvantitatív eredményei a legjobbak, ugyanakkor videós alkalmazásban gyakorlati korlátot jelent a befoglaló doboz keret-keret közötti ingadozásából eredő vibrálás (flickering). A maszk pozíciója képkockáról képkockára hirtelen változhat. Az egylépéses modell ezzel szemben kedvezőbb kompromisszumot kínál a statikus szegmentációs pontosság és a temporális stabilitás között.
 
 Összességében a kutatás igazolja, hogy könnyűsúlyú, finomhangolt transzformer-alapú szegmentáció életképes és hatékony megoldás az automatizált etológiai megfigyeléshez, feltéve, hogy rendelkezésre áll a szükséges tartományspecifikus annotált adathalmaz.
+
+A munka során azonosított korlátok, így a kétlépcsős architektúra éjszakai vibrálása, az albínó egyedek kontrasztérzékenysége és az annotációs befektetés, konkrét és kezelhető kutatási irányokat jelölnek ki, nem lezáratlan problémákat. A memória-alapú temporális követés, a többdimenziós augmentációs egyensúlyozás és a viselkedéselemző szoftverekkel való integráció mind olyan lépések, amelyek a meglévő pipeline-ra építve megvalósíthatók.
+
+Az elvégzett munka nemcsak a konkrét szegmentálási feladatot oldja meg, hanem újrafelhasználható eszközöket is hagy maga után. Az annotált adathalmaz, a négylépéses előkészítési pipeline (XML annotáció kinyerése, IoU-alapú szűrés, osztályegyensúly-tudatos augmentáció, kameranézet szerinti halmaz-szétválasztás) és a négy metrikán alapuló kiértékelési keretrendszer domain-független: hasonló laboratóriumi állat-megfigyelési feladatokra, eltérő fajok vagy kamerakörnyezetek esetén, mérsékelt annotációs ráfordítással adaptálható.
 
 \newpage
 \begin{bibdiv}
