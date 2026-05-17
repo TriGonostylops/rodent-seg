@@ -75,7 +75,7 @@
 
 
 
-{\Large SZAKDOLGOZAT}
+{\Huge\bf SZAKDOLGOZAT}
 % BSc és tanárszak esetén, szakdolg., MSc esetén diplomamunka
 
 \vspace*{1.5cm}
@@ -92,7 +92,7 @@ Segmentation of Partially Occluded Rodents Using Transformer Models
 \begin{tabular}{c@{\hspace{2cm}}c}
 \emph{Készítette:}     &\emph{Témavezető:}\\
 \bf{Balázsi Márton}  &\bf{Körmöczi László Ádám}\\
-Üzemmérnök informatikus BProf hallgató    & egyetemi docens\\
+Üzemmérnök informatikus BProf hallgató    & Tanársegéd\\
 &
 \end{tabular}
 }
@@ -107,7 +107,7 @@ Segmentation of Partially Occluded Rodents Using Transformer Models
 \begin{center}
 \vspace*{5cm}
 {\Large\bf Feladatkiírás}\\[1cm]
-{\normalsize [A feladatkiírás ide kerül beillesztésre.]}
+{\normalsize Laboratóriumi állatkísérletek során az alanyok viselkedésének elemzése gyakran videófelvételek alapján, automatizált módon történik. Előfordulhat, hogy a kísérleti alany részleges takarásban van, például ketreces patkánykísérletek esetén a ketrecen kívül elhelyezett kamera képén a ketrec rácsai részlegesen takarják az állatot. Viselkedéselemzés esetén ilyen elrendezésben is fontos a képen „szétdarabolt” állat pontos szegmentálása. A hallgató feladata a videófelvételen részleges takarásban lévő rágcsáló automatizált szegmentálása több különböző, transzformer architektúrára épülő neurális hálózat használatával, az eredmények kiértékelése és az egyes modellek teljesítményének összehasonlítása és célnak való megfelelőségük vizsgálata.}
 \end{center}
 \newpage
 
@@ -508,6 +508,44 @@ A kvantitatív kiértékelés a 92 képkockás teszthalmazon (lásd \ref{tab:fin
 \label{fig:bce_dice_night}
 \end{figure}
 
+\begin{figure}[hbt!]
+\centering
+\begin{minipage}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{images/dice-better-night-2-bce.png}
+
+    \small BCE veszteségfüggvény
+\end{minipage}
+\hfill
+\begin{minipage}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{images/dice-better-night-2.png}
+
+    \small Dice veszteségfüggvény
+\end{minipage}
+\caption{Egy másik éjszakai képkockán szintén megfigyelhető, hogy a BCE-vel tanított modell elveszíti a rágcsáló kontúrját, míg a Dice változat megtartja azt.}
+\label{fig:dice_better_night_2}
+\end{figure}
+
+\begin{figure}[hbt!]
+\centering
+\begin{minipage}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{images/bce-better-albino.png}
+
+    \small BCE veszteségfüggvény
+\end{minipage}
+\hfill
+\begin{minipage}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{images/bce-better-albino-dice.png}
+
+    \small Dice veszteségfüggvény
+\end{minipage}
+\caption{Albínó rágcsálón rögzített képkockán a BCE-vel tanított modell pontosabb maszkot ad, míg a Dice változat alulteljesít. Éjszakaihoz hasonló egyértelmű tendencia albínó esetén nem figyelhető meg.}
+\label{fig:bce_better_albino}
+\end{figure}
+
 \section{A betanítás (Fine-tuning) hiperparaméterei}
 A kiválasztott SegFormer B3 modell finomhangolása a Kaggle felhőkörnyezetben, NVIDIA Tesla T4 grafikus kártyákon történt. A betanítást az alábbi hiperparaméterekkel végeztem:
 \begin{itemize}
@@ -581,7 +619,7 @@ A finomhangolt modellek minden esetben felülmúlták a zero-shot megközelíté
 
 \section{Az első generációs modellek általánosítóképessége}
 
-Az adathalmaz első verziója kizárólag fekete-fehér, nappali felvételeket tartalmazott; albínó és éjszakai kamerarekordingok abban nem szerepeltek. Az ezen a készleten tanított modellek teszthalmazon mért eredményei lehetővé teszik annak vizsgálatát, hogy egy szűkebb tartományra betanított modell mennyire tud általánosítani ismeretlen körülményekre.
+Az adathalmaz első verziója kizárólag fekete-fehér, nappali felvételeket tartalmazott, albínó és éjszakai kamerarekordingok abban nem szerepeltek. Az ezen a készleten tanított modellek teszthalmazon mért eredményei lehetővé teszik annak vizsgálatát, hogy egy szűkebb tartományra betanított modell mennyire tud általánosítani ismeretlen körülményekre.
 
 A \ref{tab:generalization}. táblázat a v1 és v2 modellek mIoU értékeit hasonlítja össze az egyes felvételkategóriákra lebontva.
 
@@ -813,44 +851,6 @@ Szeged, \today
 \label{fig:segformer_night}
 \end{figure}
 
-
-\begin{figure}[hbt!]
-\centering
-\begin{minipage}{0.48\textwidth}
-    \centering
-    \includegraphics[width=\textwidth]{images/dice-better-night-2-bce.png}
-
-    \small BCE veszteségfüggvény
-\end{minipage}
-\hfill
-\begin{minipage}{0.48\textwidth}
-    \centering
-    \includegraphics[width=\textwidth]{images/dice-better-night-2.png}
-
-    \small Dice veszteségfüggvény
-\end{minipage}
-\caption{Egy másik éjszakai képkockán szintén megfigyelhető, hogy a BCE-vel tanított modell elveszíti a rágcsáló kontúrját, míg a Dice változat megtartja azt.}
-\label{fig:dice_better_night_2}
-\end{figure}
-
-\begin{figure}[hbt!]
-\centering
-\begin{minipage}{0.48\textwidth}
-    \centering
-    \includegraphics[width=\textwidth]{images/bce-better-albino.png}
-
-    \small BCE veszteségfüggvény
-\end{minipage}
-\hfill
-\begin{minipage}{0.48\textwidth}
-    \centering
-    \includegraphics[width=\textwidth]{images/bce-better-albino-dice.png}
-
-    \small Dice veszteségfüggvény
-\end{minipage}
-\caption{Albínó rágcsálón rögzített képkockán a BCE-vel tanított modell pontosabb maszkot ad, míg a Dice változat alulteljesít. Éjszakaihoz hasonló egyértelmű tendencia albínó esetén nem figyelhető meg.}
-\label{fig:bce_better_albino}
-\end{figure}
 
 \begin{figure}[hbt!]
 \centering
