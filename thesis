@@ -553,7 +553,8 @@ Ez nem egyedi jelenség. A \ref{fig:dice_better_night_2}. ábra egy másik éjsz
 
     \small Dice veszteségfüggvény
 \end{minipage}
-
+\caption{Egy másik éjszakai képkockán szintén megfigyelhető, hogy a BCE-vel tanított modell elveszíti a rágcsáló kontúrját, míg a Dice változat megtartja azt.}
+\label{fig:dice_better_night_2}
 \end{figure}
 
 Albínó rágcsálón rögzített felvételeknél ezzel szemben nem rajzolódott ki ilyen egyértelmű tendencia. A \ref{fig:bce_better_albino}. ábra egy olyan esetet mutat, ahol jellemzően a BCE ad pontosabb maszkot. A két veszteségfüggvény között kvalitatív szempontból albínó esetén nincs következetes különbség, a hibák hasonló képkockáknál lépnek fel. A probléma itt sem a patkány elvesztése, inkább a takarásból fakadó ismeretlenek összekötése és hallucináció.
@@ -591,7 +592,7 @@ A rendszer két független SegFormer modellt integrál:
 
 A két lépcsőhöz eltérő valószínűségi küszöböket alkalmaztam. Az első lépcső 0,30-as küszöbértékkel dolgozik, hogy a befoglaló doboz kiszámításához szükséges durva maszk biztosan tartalmazza az állat teljes kiterjedését, még akkor is, ha egyes testrészek valószínűsége viszonylag alacsony. A második lépcső kimenetét szigorúbb, 0,60-as küszöbértékkel binárisítjuk, mivel a szorosan vágott, patkánytestközpontú bemeneten a háttér aránya lényegesen kisebb, az esetlegesen magas valószínűséget kapó háttérpixelek száma is csekélyebb. Az így kapott teljes felbontású maszkon egy további utófeldolgozási lépést alkalmazunk: az összes összefüggő komponens közül kizárólag a legnagyobb területű marad meg, a kisebb szigetek eldobásra kerülnek. Ez az ún. Highlander-szabály kizárja a ketrec rácsain, vagy a kamerakép peremén keletkező apró szürkeárnyalatos foltokat, amelyek téves pozitív detektálásként jelennének meg a végső maszkban.
 
-További korlát a nagyítás számára, hogy ha a rágcsáló a ketrec kamerához közeli falára mászik, a nagyító lépés elveszti előnyösségét és nem biztos, hogy érdemi információt nyer ki a modell, ahogy azt a \ref{fig:close_rat_magnified}. ábra szemlélteti. Az is előfordulhat, hogy egyéb takaró tárgy miatt már rögtön a keretező modell eltéveszti a patkányt és a nagyító modell már nem fog tudni korrigálni, de utóbbit nem ez okozta. Az első lépésben kapott maszkok hiánytalanok.
+Ha a rágcsáló a ketrec kamerához közeli falára mászik, a perspektíva torzítása miatt az állat a képen a valóságosnál jóval kiterjedtebbnek látszik, az első lépcső befoglaló doboza szinte a teljes képkockát lefedi, és a stage 2 számára előállított kivágott szelvény nem tartalmaz érdemi pluszinformációt a teljes felbontású bemenethez képest (\ref{fig:close_rat_magnified}. ábra). Előfordulhat az is, hogy egyéb takaró tárgy miatt a keretező modell eltéveszti a patkányt, és a nagyító lépcső már nem képes korrigálni. Az első lépésben kapott maszkok azonban hiánytalanok, a hiba a láncolatban kizárólag a kivágás utáni lépésnél keletkezik.
 
 \begin{figure}[hbt!]
 \centering
@@ -600,7 +601,7 @@ További korlát a nagyítás számára, hogy ha a rágcsáló a ketrec kameráh
 \label{fig:close_rat_magnified}
 \end{figure}
 
-A két veszteségfüggvény közötti különbség albínó egyedeken is megmutatkozik, bár itt az ok kevésbé egyértelmű. A \ref{fig:albino_contrast}. ábra egy olyan esetet mutat, ahol a BCE-vel tanított kétlépcsős modell pontosabb maszkot produkál, mint a Dice változat.
+Albínó egyedeken a két veszteségfüggvény eltérő eredményt adhat, bár következetes tendencia nem rajzolódik ki. Ugyanazon képkockán a BCE-vel tanított kétlépcsős változat pontosabb kontúrokat ad, mint a Dice modell (\ref{fig:albino_contrast}. ábra), az eltérés azonban nem magyarázható egyetlen azonosítható tényezővel.
 
 \begin{figure}[hbt!]
 \centering
@@ -683,16 +684,24 @@ Finomhangolt & SegFormer B3 (kétlépcsős, Dice) & 0.7675 & 0.8618 & 0.4149 & 6
 
 A finomhangolt modellek minden esetben felülmúlták a zero-shot megközelítéseket az átfedési metrikák (mIoU, Dice, Boundary IoU) tekintetében. A leggyengébb finomhangolt modell (BCE loss) mIoU értéke 0.7425, ami 15 százalékponttal haladja meg a legjobb alapmodell (SAM 2, mIoU 0.6442) teljesítményét.
 
+A pontossági előny mellett a SegFormer B3 ($\approx$47M paraméter) méretéből adódó sebességi előny is figyelemre méltó. A modell egyetlen képkockán végzett inferenciája fogyasztói grafikus kártyán is valós idejű feldolgozást tesz lehetővé, ami élő videófolyamon történő alkalmazáshoz szükséges feltétel, és a több százmillió paraméteres alapmodellektől elvárható sebességgel nem teljesíthető. Ugyanakkor ha maga a szegmentációs feladat válik nehezebben megoldhatóvá, például erősen alacsony kontrasztú albínó egyedek vagy ismeretlen kameraállás esetén, a nagy általános célú modellek nagyobb kapacitása és szélesebb vizuális tudása előnyt jelenthet annak ellenére, hogy finomhangolás nélkül pontosságban elmaradnak.
+
 \newpage
 \chapter{Jövőbeli fejlesztési lehetőségek}
 
-Az elvégzett kísérletek több olyan irányt is kijelöltek, amelyek mentén a rendszer teljesítménye és alkalmazhatósága tovább növelhető.
+Az alábbi fejlesztési irányok becsült hatásuk sorrendjében szerepelnek.
+
+\textbf{Adathalmaz bővítése.}
+A pontosság növelésének legegyenesebb útja több annotált kép-maszk pár bevonása. A jelenlegi adathalmaz 736 képkockát tartalmaz tíz kameraállásból, ami korlátozza a modell által látott póz- és megvilágítás-variációk körét. Új kameraállások, különböző laborberendezések vagy hosszabb felvételsorozatok bevonása közvetlenül javítaná az általánosítóképességet. Az aktív tanulás (active learning) elvét alkalmazva célszerű elsőként azokat a képkockákat annotálni, amelyeken a modell jelenlegi bizonytalansága a legnagyobb, így a befektetett annotációs munka a maximális teljesítményjavulást hozza. A meglévő pipeline, az IoU-alapú szűréstől a kameranézet szerinti halmaz-szétválasztásig, strukturális módosítás nélkül képes befogadni az új adatokat.
 
 \textbf{Memória-alapú temporális követés.}
 A jelenlegi rendszer képkockánként önállóan dönt, ami a kétlépcsős architektúrában vibrálást (flickering) okoz, ha a befoglaló doboz pozíciója keret-keret között ingadozik. Egy lehetséges megoldás, hogy a modell a predikció során nemcsak az aktuális képkocka tartalmát, hanem korábbi, magas megbízhatóságú képkockák vizuális memóriáját is figyelembe veszi. Ha a rendszer azokat a képkockákat, amelyeken a predikció valószínűsége egyértelműen magas (például tiszta, takarás nélküli felvételek), vizuális referenciaként tárolja, ezek az ankerek az alacsony kontrasztú vagy elmosódott képkockákon nyújtott szegmentációt stabilizálhatják. Ez a megközelítés rokon a SAM 2 kereszt-képkocka memória-figyelemmechanizmusával, amely videós üzemmódban a korábbi képkockák jellemzőit használja a jelen képkocka szegmentálásának kontextusává. A meglévő SegFormer-alapú pipeline-ba ez viszonylag kevés módosítással integrálható lenne, mivel csak az inferenciaszintű memóriakezelést érinti, a modelltanítást nem.
 
-\textbf{Augmentációs stratégia és adathalmaz-menedzsment finomítása.}
-Az aktuális osztályegyensúly-korrekció kizárólag a patkánytípus (albínó vs. fekete-fehér) szerinti alulreprezentáltságot veszi figyelembe. Egy többdimenziós kiegyensúlyozó stratégia, amely egyszerre kezeli a patkánytípust, a napszakot (nappal vs. éjszaka) és a ketrecen belüli térbeli pozíciót, pontosabban tükrözné a valós üzemelési eloszlást, és csökkenthetné a modell elfogultságát egyes testtartás- vagy pozíciókategóriákkal szemben. A feldolgozási pipeline \texttt{src/stats.py} modulja már most is számol 3$\times$3-as térbeli rácsstatisztikákat, kompaktság- és területhisztogramokat, amelyek automatikus adathalmaz-audithoz felhasználhatók: ezek alapján azonosíthatók az alulreprezentált pózkategóriák, és prioritizálható a jövőbeli annotációs munka.
+\textbf{Ensemble-alapú predikció (tesztkori augmentáció).}
+A véletlen erdő (random forest) elvéhez hasonlóan, ahol sok gyenge döntési fa szavazata együttesen erős és robusztus jóslatot ad, a szegmentációs modell is futtatható ugyanazon képkockán többször, különböző bemeneti variációkkal. A tesztkori augmentáció (test-time augmentation, TTA) során a képkocka eredeti formájában és több transzformált változatában (vízszintes tükrözés, kis forgatás, fényerő-eltolás) kerül feldolgozásra, a kapott maszkok pixelenkénti átlagolása pedig egyetlen, robusztusabb predikciót eredményez. Ez a módszer új tanítást vagy annotációt nem igényel, kizárólag inferenciaidőt áldoz a megbízhatóság növeléséért. Különösen ígéretes a nehéz esetekben, ahol egyetlen futtatás bizonytalanságot mutat, például alacsony kontrasztú albínó egyedek vagy elmosódott éjszakai felvételek esetén. A kétlépcsős architektúra természetesen terjeszthető ki: az első lépcső TTA-val több befoglaló-doboz jelöltet állít elő, a második lépcső mindegyiket finomítja, az eredmények pedig összefésülhetők.
+
+\textbf{Augmentációs stratégia és adat\-halmaz-me\-nedzs\-ment finomítása.}
+Az aktuális osztály\-egyensúly-korrekció kizárólag a patkánytípus (albínó vs. fekete-fehér) szerinti alulreprezentáltságot veszi figyelembe. Egy többdimenziós kiegyensúlyozó stratégia, amely egyszerre kezeli a patkánytípust, a napszakot (nappal vs. éjszaka) és a ketrecen belüli térbeli pozíciót, pontosabban tükrözné a valós üzemelési eloszlást, és csökkenthetné a modell elfogultságát egyes testtartás- vagy pozíciókategóriákkal szemben. A feldolgozási pipeline \texttt{src/stats.py} modulja már most is számol 3$\times$3-as térbeli rácsstatisztikákat, kompaktság- és területhisztogramokat, amelyek automatikus adathalmaz-audithoz felhasználhatók: ezek alapján azonosíthatók az alulreprezentált pózkategóriák, és prioritizálható a jövőbeli annotációs munka.
 
 \textbf{Integráció viselkedéselemző szoftverekkel.}
 A szegmentációs maszk önmagában közbenső termék. Az etológiai kutatás valódi célja az állat teljes megfigyelési ülés alatti mozgásának, testtartásának és viselkedésének kvantitatív jellemzése. A rendszer kimenetét DeepLabCut-tal (pontspecifikus testpont-követés) vagy BORIS-szal (viselkedési annotációs szoftver) összekapcsolva a nyyers videófelvételből emberi beavatkozás nélkül állíthatók elő statisztikák. A Highlander-szabály utófeldolgozásával kapott egybefüggő, egyetlen komponensből álló maszk alkalmas közvetlen bemenetként ilyen downstream eszközök számára.
