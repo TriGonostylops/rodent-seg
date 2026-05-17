@@ -482,6 +482,30 @@ A ViT minden patch-pozícióhoz egy rögzített, betanított vektort rendel, ame
 
 A hagyományos szegmentációs dekódolók számításigényesek, mert a kódolóban elveszett térbeli részleteket nekik kell visszaállítaniuk összetett upsampling lépésekkel. A SegFormer kódolója azonban mind a négy felbontási szintet megőrzi, ezért a dekódolónak nincs szüksége rekonstrukcióra. A négy fokozat jellemzőtérképeit egységes felbontásra interpolálja, összefűzi, majd egyetlen lineáris vetítéssel előállítja a pixelszintű szegmentációs maszkot. A dekódoló egyszerűsége nem kompromisszum, hanem a kódoló felépítésének közvetlen következménye \cite{xie2021segformer}.
 
+\section{Az adathalmaz fejlesztése és az első generációs modellek}
+
+A finomhangolás kiindulópontja mintegy 306 fekete-fehér patkány kép-maszk párból álló adathalmaz volt, amely kizárólag nappali felvételeket tartalmazott, albínó egyedek és éjszakai kamerarekordingok nem szerepeltek benne. Az ezen a készleten tanított első generációs (v1) modellek teszthalmazon mért eredményeit a \ref{tab:generalization}. táblázat foglalja össze az egyes felvételkategóriákra lebontva.
+
+\begin{table}[hbt!]
+\centering
+\caption{V1 és v2 modellek mIoU összehasonlítása felvételkategóriánként}
+\label{tab:generalization}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lrrrr}
+\hline
+\textbf{Modell} & \textbf{Összesített} & \textbf{Albínó} & \textbf{Fekete-fehér} & \textbf{Éjszakai} \\
+\hline
+SegFormer B3 BCE (v1) & 0.5346 & 0.5605 & 0.5260 & 0.5095 \\
+SegFormer B3 BCE (v2) & 0.7425 & 0.7915 & 0.7262 & 0.7233 \\
+Kétlépcsős BCE (v1)   & 0.5055 & 0.4945 & 0.5091 & 0.4957 \\
+Kétlépcsős BCE (v2)   & 0.7625 & 0.8113 & 0.7463 & 0.7451 \\
+\hline
+\end{tabular}%
+}
+\end{table}
+
+A v1 modellek mIoU értéke minden kategóriában 0.49 és 0.56 közé esik. Ez nem véletlenszerű eredmény, a modellek felismerik és nagyjából lokalizálják a rágcsálót ismeretlen kameraképeken is, ami a tanult alakjellemzők bizonyos fokú átvitelét jelzi. Pontos kontúrszegmentációra azonban nem képesek. Különösen szembetűnő az albínó kategória, ahol a v1 mIoU értéke 0.49 körül marad, miközben a v2 0.79--0.81 körüli értéket ér el. Ez az eredmény motiválta az adathalmaz bővítését albínó és éjszakai felvételekkel. Az összes modellt az így kialakított v2 adathalmazon tanítottuk újra. A következő szakaszok az ezen az adathalmazon végzett kísérleteket és azok eredményeit ismertetik.
+
 \section{Modellválasztás és kísérleti felállások}
 A finomhangolás (fine-tuning) során több modellméretet és veszteségfüggvényt is megvizsgáltam a leghatékonyabb konfiguráció megtalálása érdekében.
 
@@ -491,22 +515,28 @@ A finomhangolás (fine-tuning) során több modellméretet és veszteségfüggv�
 
 A kvantitatív kiértékelés a 92 képkockás teszthalmazon (lásd \ref{tab:finetuned_results}. táblázat) nagyon hasonló eredményt mutat a két konfiguráció között, a BCE mIoU értéke 0,7425, a Dice-é 0,7452. A teszthalmaz mérete alapján ez az eltérés nem tekinthető szisztematikusan szignifikánsnak. A hosszabb tesztvideókon végzett kvalitatív elemzés sem hozott egyértelmű döntést.
 
-Éjszakai, alacsony kontrasztú felvételeken azonban megfigyelhető volt, hogy a BCE-vel tanított modell egyes képkockákon elveszíti a rágcsáló kontúrját, míg a Dice változat megtartja azt, ahogy azt a \ref{fig:bce_dice_night}. és a \ref{fig:dice_better_night_2}. ábra szemlélteti. Albínó rágcsálón rögzített felvételeknél ezzel szemben nem volt ilyen egyértelmű különbség. A \ref{fig:bce_better_albino}. ábra egy olyan esetet mutat, ahol a BCE ad jobb eredményt, de találhatók olyan példák is, ahol a Dice bizonyul pontosabbnak. A stabilabb konvergenciát biztosító súlyozott BCE maradt a munkafolyamat alapja.
+Éjszakai, alacsony kontrasztú felvételeken azonban megfigyelhető volt, hogy a BCE-vel tanított modell egyes képkockákon elveszíti a rágcsáló kontúrját, míg a Dice változat megtartja azt, ahogy azt a \ref{fig:bce_dice_night}. ábra szemlélteti.
 
 \begin{figure}[hbt!]
 \centering
 \begin{minipage}{0.48\textwidth}
     \centering
     \includegraphics[width=\textwidth]{images/segformer-b3-bce-night-loses-rat.png}
+
+    \small BCE veszteségfüggvény
 \end{minipage}
 \hfill
 \begin{minipage}{0.48\textwidth}
     \centering
     \includegraphics[width=\textwidth]{images/segformer-b3-dice-night-tracks-rat.png}
+
+    \small Dice veszteségfüggvény
 \end{minipage}
-\caption{Ugyanazon éjszakai képkockán a BCE veszteségfüggvénnyel tanított modell elveszíti a rágcsáló kontúrját, míg a Dice változat megtartja azt.}
+\caption{Ugyanazon éjszakai képkockán a BCE-vel tanított modell elveszíti a rágcsáló kontúrját, míg a Dice változat megtartja azt.}
 \label{fig:bce_dice_night}
 \end{figure}
+
+Ez nem egyedi jelenség. A \ref{fig:dice_better_night_2}. ábra egy másik éjszakai képkockán mutatja ugyanezt a viselkedést, megerősítve, hogy a Dice veszteségfüggvény alacsony kontrasztú körülmények között robusztusabb kontúrkövetést biztosít.
 
 \begin{figure}[hbt!]
 \centering
@@ -527,6 +557,8 @@ A kvantitatív kiértékelés a 92 képkockás teszthalmazon (lásd \ref{tab:fin
 \label{fig:dice_better_night_2}
 \end{figure}
 
+Albínó rágcsálón rögzített felvételeknél ezzel szemben nem rajzolódott ki ilyen egyértelmű tendencia. A \ref{fig:bce_better_albino}. ábra egy olyan esetet mutat, ahol a BCE ad pontosabb maszkot, ugyanakkor fordított irányú példák is előfordulnak. A két veszteségfüggvény között kvalitatív szempontból albínó esetén nincs következetes különbség.
+
 \begin{figure}[hbt!]
 \centering
 \begin{minipage}{0.48\textwidth}
@@ -545,6 +577,8 @@ A kvantitatív kiértékelés a 92 képkockás teszthalmazon (lásd \ref{tab:fin
 \caption{Albínó rágcsálón rögzített képkockán a BCE-vel tanított modell pontosabb maszkot ad, míg a Dice változat alulteljesít. Éjszakaihoz hasonló egyértelmű tendencia albínó esetén nem figyelhető meg.}
 \label{fig:bce_better_albino}
 \end{figure}
+
+A fentiek alapján a stabilabb konvergenciát biztosító súlyozott BCE maradt a munkafolyamat alapja.
 
 \section{A betanítás (Fine-tuning) hiperparaméterei}
 A kiválasztott SegFormer B3 modell finomhangolása a Kaggle felhőkörnyezetben, NVIDIA Tesla T4 grafikus kártyákon történt. A betanítást az alábbi hiperparaméterekkel végeztem:
@@ -586,7 +620,37 @@ SegFormer B3 (kétlépcsős, Dice loss) & 0.7675 & 0.8618 & 0.4149 & 62.3083 \\
 }
 \end{table}
 
-A kétlépcsős architektúra mindkét konfigurációban felülmúlja az egylépéses modelleket. A BCE-vel tanított változat érte el a legjobb Hausdorff-távolságot (52.85 px) és Boundary IoU értéket (0.4142), míg a Dice veszteségfüggvénnyel tanított változat magasabb mIoU értéket produkált (0.7675), de gyengébb Hausdorff-távolsággal (62.31 px). Ez igazolja, hogy a finomabb térbeli részletekre fókuszáló második lépés érdemben javítja a kontúrok pontosságát. Ugyanakkor a kétlépcsős rendszer videón vizsgálva több gyakorlati hátrányt mutat. A befoglaló doboz keret-keret közötti ingadozása vibrálást (flickering) okoz a maszk pozíciójában, ami az egylépéses modellnél nem figyelhető meg. Éjszakai felvételeken ez különösen zavaró, mivel az élénk színű maszk folyamatos pozíció- és alakváltozása szemmel követve kellemetlen vizuális hatást kelt. További korlát, hogy ha a rágcsáló a ketrec kamerához közeli falára mászik, a perspektíva torzítása miatt az állat a képen a valóságosnál sokszorosannak tűnő kiterjedéssel jelenik meg. Ilyenkor a stage 1 modell befoglaló doboza a képkeret nagy részét lefedi, a stage 2 modell számára előállított felnagyított képszelvény nem tartalmaz érdemi pluszinformációt a teljes felbontású bemenethez képest, ahogy azt a \ref{fig:close_rat_magnified}. ábra szemlélteti. Albínó egyedek esetén a kétlépcsős modell teljesítménye erősen függ az előtér-háttér kontraszttól. Sötét hátterű ketrecben, ahol a világos bundájú állat jól elkülönül a környezetétől, a rendszer szinte tökéletes maszkot produkál, ahogy azt a \ref{fig:albino_contrast}. ábra szemlélteti. Ha azonban a ketrec aljzatán vagy falain reflektív, világos felületek találhatók, a modell elveszíti az állatot, a maszk képkockáról képkockára látványosan eltérő helyre kerül. A számszerű fölény ellenére a kétlépcsős megközelítés ezért nem tekinthető egyértelműen jobb választásnak az egylépéses modellekkel szemben. A két architektúra között kompromisszumot kell kötni a statikus pontosság és a temporális stabilitás között.
+A kétlépcsős architektúra mindkét konfigurációban felülmúlja az egylépéses modelleket. A BCE-vel tanított változat érte el a legjobb Hausdorff-távolságot (52.85 px) és Boundary IoU értéket (0.4142), míg a Dice veszteségfüggvénnyel tanított változat magasabb mIoU értéket produkált (0.7675), de gyengébb Hausdorff-távolsággal (62.31 px). Ez igazolja, hogy a finomabb térbeli részletekre fókuszáló második lépés érdemben javítja a kontúrok pontosságát. Ugyanakkor a kétlépcsős rendszer videón vizsgálva több gyakorlati hátrányt mutat. A befoglaló doboz keret-keret közötti ingadozása vibrálást (flickering) okoz a maszk pozíciójában, ami az egylépéses modellnél nem figyelhető meg. Éjszakai felvételeken ez különösen zavaró, mivel az élénk színű maszk folyamatos pozíció- és alakváltozása szemmel követve kellemetlen vizuális hatást kelt. További korlát, hogy ha a rágcsáló a ketrec kamerához közeli falára mászik, a perspektíva torzítása miatt az állat a képen a valóságosnál sokszorosannak tűnő kiterjedéssel jelenik meg. Ilyenkor a stage 1 modell befoglaló doboza a képkeret nagy részét lefedi, a stage 2 modell számára előállított felnagyított képszelvény nem tartalmaz érdemi pluszinformációt a teljes felbontású bemenethez képest, ahogy azt a \ref{fig:close_rat_magnified}. ábra szemlélteti.
+
+\begin{figure}[hbt!]
+\centering
+\includegraphics[width=0.55\textwidth]{images/close-rat-magnified-result.png}
+\caption{Ha a rágcsáló a kamera közelébe ér, a perspektíva torzítása miatt a kétlépcsős rendszer stage 2 modelljének felnagyított képszelvénye nem tartalmaz érdemi pluszinformációt a teljes felbontású bemenethez képest.}
+\label{fig:close_rat_magnified}
+\end{figure}
+
+Albínó egyedek esetén a kétlépcsős modell teljesítménye erősen függ az előtér-háttér kontraszttól. Sötét hátterű ketrecben, ahol a világos bundájú állat jól elkülönül a környezetétől, a rendszer szinte tökéletes maszkot produkál, ahogy azt a \ref{fig:albino_contrast}. ábra szemlélteti.
+
+\begin{figure}[hbt!]
+\centering
+\begin{minipage}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{images/bce-magnify-better-with-albino.png}
+
+    \small Sötét háttér, megfelelő kontraszt
+\end{minipage}
+\hfill
+\begin{minipage}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{images/bce-magnify-better-with-albino-dice.png}
+
+    \small Világos, reflektív háttér
+\end{minipage}
+\caption{A kétlépcsős modell albínó rágcsáló szegmentációja sötét és világos háttér előtt. Sötét háttéren az előtér-háttér kontraszt elegendő a pontos maszkoláshoz, reflektív, világos háttér esetén a modell nem ad konzisztens eredményt.}
+\label{fig:albino_contrast}
+\end{figure}
+
+Ha azonban a ketrec aljzatán vagy falain reflektív, világos felületek találhatók, a modell elveszíti az állatot, a maszk képkockáról képkockára látványosan eltérő helyre kerül. A számszerű fölény ellenére a kétlépcsős megközelítés ezért nem tekinthető egyértelműen jobb választásnak az egylépéses modellekkel szemben. A két architektúra között kompromisszumot kell kötni a statikus pontosság és a temporális stabilitás között.
 
 \section{Összehasonlítás a zero-shot modellekkel}
 
@@ -616,32 +680,6 @@ Finomhangolt & SegFormer B3 (kétlépcsős, Dice) & 0.7675 & 0.8618 & 0.4149 & 6
 \end{table}
 
 A finomhangolt modellek minden esetben felülmúlták a zero-shot megközelítéseket az átfedési metrikák (mIoU, Dice, Boundary IoU) tekintetében. A leggyengébb finomhangolt modell (BCE loss) mIoU értéke 0.7425, ami 15 százalékponttal haladja meg a legjobb alapmodell (SAM 2, mIoU 0.6442) teljesítményét.
-
-\section{Az első generációs modellek általánosítóképessége}
-
-Az adathalmaz első verziója kizárólag fekete-fehér, nappali felvételeket tartalmazott, albínó és éjszakai kamerarekordingok abban nem szerepeltek. Az ezen a készleten tanított modellek teszthalmazon mért eredményei lehetővé teszik annak vizsgálatát, hogy egy szűkebb tartományra betanított modell mennyire tud általánosítani ismeretlen körülményekre.
-
-A \ref{tab:generalization}. táblázat a v1 és v2 modellek mIoU értékeit hasonlítja össze az egyes felvételkategóriákra lebontva.
-
-\begin{table}[hbt!]
-\centering
-\caption{V1 és v2 modellek mIoU összehasonlítása felvételkategóriánként}
-\label{tab:generalization}
-\resizebox{\textwidth}{!}{%
-\begin{tabular}{lrrrr}
-\hline
-\textbf{Modell} & \textbf{Összesített} & \textbf{Albínó} & \textbf{Fekete-fehér} & \textbf{Éjszakai} \\
-\hline
-SegFormer B3 BCE (v1) & 0.5346 & 0.5605 & 0.5260 & 0.5095 \\
-SegFormer B3 BCE (v2) & 0.7425 & 0.7915 & 0.7262 & 0.7233 \\
-Kétlépcsős BCE (v1)   & 0.5055 & 0.4945 & 0.5091 & 0.4957 \\
-Kétlépcsős BCE (v2)   & 0.7625 & 0.8113 & 0.7463 & 0.7451 \\
-\hline
-\end{tabular}%
-}
-\end{table}
-
-A v1 modellek mIoU értéke minden kategóriában 0.49 és 0.56 közé esik, ami egységes, de korlátozott teljesítményt jelent. Ez nem véletlenszerű eredmény: a modellek felismerik és nagyjából lokalizálják a rágcsálót ismeretlen kameraképeken is, ami a tanult alakjellemzők bizonyos fokú átvitelét jelzi. Pontos kontúrszegmentációra azonban nem képesek, a maszkok minősége minden kategóriában közel azonos mértékben marad el a v2 szinttől. A v2 adathalmaz, amely albínó és éjszakai felvételeket is tartalmaz, közel 20 százalékpontos javulást eredményez összesítve, és különösen az albínó kategóriában szembetűnő a különbség (v1 0.49--0.56, v2 0.79--0.81). Ez megerősíti, hogy az adathalmaz célzott bővítése elengedhetetlen a produkciós minőségű szegmentációhoz.
 
 \newpage
 \chapter{Következtetés}
@@ -828,7 +866,7 @@ Szeged, \today
 \begin{figure}[hbt!]
 \centering
 \includegraphics[width=0.7\textwidth]{images/grounded-sam.png}
-\caption{Grounded-SAM 2 kimenete a teszthalmazon. A Grounding DINO által generált befoglaló doboz alapján a SAM 2 elvégzi a pixelszintű szegmentálást.}
+\caption{Grounded-SAM 2 kimenete a teszthalmazon. A modell általában felismeri a patkány helyzetét, de a szegmentációs maszk pontossága elmarad a finomhangolt modellekétől.}
 \label{fig:grounded_sam}
 \end{figure}
 
@@ -847,35 +885,8 @@ Szeged, \today
 
     \small Dice veszteségfüggvény
 \end{minipage}
-\caption{SegFormer B3 tipikus éjszakai kimenetei BCE és Dice veszteségfüggvénnyel.}
+\caption{SegFormer B3 tipikus éjszakai kimenetei BCE és Dice veszteségfüggvénnyel, ahol mindkét modell megfelelően teljesít.}
 \label{fig:segformer_night}
-\end{figure}
-
-
-\begin{figure}[hbt!]
-\centering
-\includegraphics[width=0.7\textwidth]{images/close-rat-magnified-result.png}
-\caption{Ha a rágcsáló a kamera közelébe ér, a perspektíva torzítása miatt a kétlépcsős rendszer stage 2 modelljének felnagyított képszelvénye nem tartalmaz érdemi pluszinformációt a teljes felbontású bemenethez képest.}
-\label{fig:close_rat_magnified}
-\end{figure}
-
-\begin{figure}[hbt!]
-\centering
-\begin{minipage}{0.48\textwidth}
-    \centering
-    \includegraphics[width=\textwidth]{images/bce-magnify-better-with-albino.png}
-
-    \small Sötét háttér, megfelelő kontraszt
-\end{minipage}
-\hfill
-\begin{minipage}{0.48\textwidth}
-    \centering
-    \includegraphics[width=\textwidth]{images/bce-magnify-better-with-albino-dice.png}
-
-    \small Világos, reflektív háttér
-\end{minipage}
-\caption{A kétlépcsős modell albínó rágcsáló szegmentációja sötét és világos háttér előtt. Sötét háttéren az előtér-háttér kontraszt elegendő a pontos maszkoláshoz, reflektív, világos háttér esetén a modell nem ad konzisztens eredményt.}
-\label{fig:albino_contrast}
 \end{figure}
 
 \end{document}
