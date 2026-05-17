@@ -591,6 +591,36 @@ A rendszer két független SegFormer modellt integrál:
 
 A két lépcsőhöz eltérő valószínűségi küszöböket alkalmaztam. Az első lépcső 0,30-as küszöbértékkel dolgozik, hogy a befoglaló doboz kiszámításához szükséges durva maszk biztosan tartalmazza az állat teljes kiterjedését, még akkor is, ha egyes testrészek valószínűsége viszonylag alacsony. A második lépcső kimenetét szigorúbb, 0,60-as küszöbértékkel binárisítjuk, mivel a szorosan vágott, patkánytestközpontú bemeneten a háttér aránya lényegesen kisebb, az esetlegesen magas valószínűséget kapó háttérpixelek száma is csekélyebb. Az így kapott teljes felbontású maszkon egy további utófeldolgozási lépést alkalmazunk: az összes összefüggő komponens közül kizárólag a legnagyobb területű marad meg, a kisebb szigetek eldobásra kerülnek. Ez az ún. Highlander-szabály kizárja a ketrec rácsain, vagy a kamerakép peremén keletkező apró szürkeárnyalatos foltokat, amelyek téves pozitív detektálásként jelennének meg a végső maszkban.
 
+További korlát a nagyítás számára, hogy ha a rágcsáló a ketrec kamerához közeli falára mászik, a nagyító lépés elveszti előnyösségét és nem biztos, hogy érdemi információt nyer ki a modell, ahogy azt a \ref{fig:close_rat_magnified}. ábra szemlélteti. Az is előfordulhat, hogy egyéb takaró tárgy miatt már rögtön a keretező modell eltéveszti a patkányt és a nagyító modell már nem fog tudni korrigálni, de utóbbit nem ez okozta. Az első lépésben kapott maszkok hiánytalanok.
+
+\begin{figure}[hbt!]
+\centering
+\includegraphics[width=0.55\textwidth]{images/close-rat-magnified-result.png}
+\caption{Ha a rágcsáló a kamera közelébe ér, a perspektíva torzítása miatt a kétlépcsős rendszer stage 2 modelljének felnagyított képszelvénye nem tartalmaz érdemi pluszinformációt a teljes felbontású bemenethez képest.}
+\label{fig:close_rat_magnified}
+\end{figure}
+
+A két veszteségfüggvény közötti különbség albínó egyedeken is megmutatkozik, bár itt az ok kevésbé egyértelmű. A \ref{fig:albino_contrast}. ábra egy olyan esetet mutat, ahol a BCE-vel tanított kétlépcsős modell pontosabb maszkot produkál, mint a Dice változat.
+
+\begin{figure}[hbt!]
+\centering
+\begin{minipage}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{images/bce-magnify-better-with-albino.png}
+
+    \small BCE veszteségfüggvény
+\end{minipage}
+\hfill
+\begin{minipage}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{images/bce-magnify-better-with-albino-dice.png}
+
+    \small Dice veszteségfüggvény
+\end{minipage}
+\caption{Albínó rágcsálón a kétlépcsős BCE modell pontosabb maszkot ad, mint a Dice változat. A különbség oka nem egyértelmű.}
+\label{fig:albino_contrast}
+\end{figure}
+
 \section{A finomhangolt modellek kvantitatív kiértékelése}
 
 Az alábbi táblázat összefoglalja a kísérleti SegFormer konfigurációk teljesítményét az azonos teszthalmazon.
@@ -614,38 +644,7 @@ SegFormer B3 (kétlépcsős, Dice loss) & 0.7675 & 0.8618 & 0.4149 & 62.3083 \\
 }
 \end{table}
 
-A kétlépcsős architektúra mindkét konfigurációban felülmúlja az egylépéses modelleket. A BCE-vel tanított változat érte el a legjobb Hausdorff-távolságot (52.85 px) és Boundary IoU értéket (0.4142), míg a Dice veszteségfüggvénnyel tanított változat magasabb mIoU értéket produkált (0.7675), de gyengébb Hausdorff-távolsággal (62.31 px). Ez igazolja, hogy a finomabb térbeli részletekre fókuszáló második lépés érdemben javítja a kontúrok pontosságát. Ugyanakkor a kétlépcsős rendszer videón vizsgálva több gyakorlati hátrányt mutat. A befoglaló doboz keret-keret közötti ingadozása vibrálást (flickering) okoz a maszk pozíciójában, ami az egylépéses modellnél nem figyelhető meg. Éjszakai felvételeken ez különösen zavaró, mivel az élénk színű maszk folyamatos pozíció és alakváltozása szemmel követve kellemetlen vizuális hatást kelt. További korlát a nagyítás számára, hogy ha a rágcsáló a ketrec kamerához közeli falára mászik akkor a nagyító lépés elveszti előnyösségét és nem biztos, hogy érdemi információt nyer ki a modell, ahogy azt a \ref{fig:close_rat_magnified}. ábra szemlélteti. Az is előfordulhat, hogy egyéb takaró tárgy miatt már rögtön a keretező modell eltéveszti a patkányt és a nagyító modell már nem fog tudni korrigálni, de utóbbit nem ez okozta. Az első lépésben kapott maszkok hiánytalanok.
-
-\begin{figure}[hbt!]
-\centering
-\includegraphics[width=0.55\textwidth]{images/close-rat-magnified-result.png}
-\caption{Ha a rágcsáló a kamera közelébe ér, a perspektíva torzítása miatt a kétlépcsős rendszer stage 2 modelljének felnagyított képszelvénye nem tartalmaz érdemi pluszinformációt a teljes felbontású bemenethez képest.}
-\label{fig:close_rat_magnified}
-\end{figure}
-
-Albínó egyedek esetén a kétlépcsős modell teljesítménye erősen függ az előtér-háttér kontraszttól. Sötét hátterű ketrecben, ahol a világos bundájú állat jól elkülönül a környezetétől, a rendszer szinte tökéletes maszkot produkál, ahogy azt a \ref{fig:albino_contrast}. ábra szemlélteti.
-
-\begin{figure}[hbt!]
-\centering
-\begin{minipage}{0.48\textwidth}
-    \centering
-    \includegraphics[width=\textwidth]{images/bce-magnify-better-with-albino.png}
-
-    \small A súlyozott BCE veszteségfüggvény alapú kétlépcsős modell megtalálja és precízen maszkot készít.
-\end{minipage}
-\hfill
-\begin{minipage}{0.48\textwidth}
-    \centering
-    \includegraphics[width=\textwidth]{images/bce-magnify-better-with-albino-dice.png}
-
-    \small A dice alapú keretezés az első lépésnél zátonyra fut, és tévesen jelöl ki területet a nagyító számára.
-\end{minipage}
-\caption{A kétlépcsős modell albínó rágcsáló szegmentációja sötét és világos háttér előtt. Sötét háttéren az előtér-háttér kontraszt elegendő a pontos maszkoláshoz, reflektív, világos háttér esetén a modell nem ad konzisztens eredményt.}
-\label{fig:albino_contrast}
-\end{figure}
-
-Ha azonban a ketrec aljzatán vagy falain reflektív, világos felületek találhatók, a modell elveszíti az állatot, a maszk képkockáról képkockára látványosan eltérő helyre kerül. A számszerű fölény ellenére a kétlépcsős megközelítés ezért nem tekinthető egyértelműen jobb választásnak az egylépéses modellekkel szemben. A két architektúra között kompromisszumot kell kötni a statikus pontosság és a temporális stabilitás között.
-
+A kétlépcsős architektúra mindkét konfigurációban felülmúlja az egylépéses modelleket. A BCE-vel tanított változat érte el a legjobb Hausdorff-távolságot (52.85 px) és Boundary IoU értéket (0.4142), míg a Dice veszteségfüggvénnyel tanított változat magasabb mIoU értéket produkált (0.7675), de gyengébb Hausdorff-távolsággal (62.31 px). Ez igazolja, hogy a finomabb térbeli részletekre fókuszáló második lépés érdemben javítja a kontúrok pontosságát.
 
 \section{A betanítás (Fine-tuning) hiperparaméterei}
 A kiválasztott SegFormer B3 modell finomhangolása a Kaggle felhőkörnyezetben, NVIDIA Tesla T4 grafikus kártyákon történt. A betanítást az alábbi hiperparaméterekkel végeztem:
