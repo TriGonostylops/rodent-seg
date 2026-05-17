@@ -487,11 +487,11 @@ A finomhangolás (fine-tuning) során több modellméretet és veszteségfüggv�
 
 \textbf{Modellméret és felbontás (B3 vs. B5):} A kísérletek során összehasonlításra került a közepes méretű \texttt{nvidia/mit-b3} és a lényegesen nagyobb paraméterszámú \texttt{nvidia/mit-b5} kódoló. A rendelkezésre álló Kaggle felhőkörnyezet (2$\times$ NVIDIA Tesla T4) memóriakorlátai miatt a B5 modell kizárólag 512$\times$512 pixeles bemeneten volt futtatható, szemben a B3 által használt 1024$\times$1024 pixeles felbontással. A teszthalmazon mért eredmények alapján a B5 modell (mIoU: 0.6640, Boundary IoU: 0.2085) minden metrikán elmaradt a B3-tól (mIoU: 0.7425, Boundary IoU: 0.3447). A két konfiguráció eltérő felbontáson futott, így az eredmények különbsége nem tulajdonítható egyértelműen az architektúra méretének. Ennek megfelelően a végleges architektúra alapjául a SegFormer B3 verziója szolgált.
 
-\textbf{Veszteségfüggvények (weighted BCE vs. Dice):} A szegmentációs pontosság növelése érdekében két veszteségfüggvényt vizsgáltam. A BCE pixelenként értékeli a predikciót. Mivel a képeken a háttérpixelek száma jóval meghaladja a rágcsáló pixeleinek számát, a háttér osztály súlyát 1,0-ra, a rágcsáló osztályét 5,0-ra állítottam.
+\textbf{Veszteségfüggvények (weighted BCE vs. Dice):} A szegmentációs pontosság növelése érdekében két veszteségfüggvényt vizsgáltam, mindkettővel ugyanazon az adathalmazon tanítva a modellt. A BCE pixelenként értékeli a predikciót. Mivel a képeken a háttérpixelek száma jóval meghaladja a rágcsáló pixeleinek számát, a háttér osztály súlyát 1,0-ra, a rágcsáló osztályét 5,0-ra állítottam.
 
-A Dice veszteségfüggvény a kiértékelési metrikaként is használt Dice-együttható folytonos változata. Metrikaként a Dice-t a küszöbölés utáni bináris maszkon számítják, ami nem differenciálható. Veszteségfüggvényként a küszöbölés előtti valószínűségi kimeneten számítják, ami lehetővé teszi a gradiens alapú tanítást.
+A kvantitatív kiértékelés a 92 képkockás teszthalmazon (lásd \ref{tab:finetuned_results}. táblázat) nagyon hasonló eredményt mutat a két konfiguráció között, a BCE mIoU értéke 0,7425, a Dice-é 0,7452. A teszthalmaz mérete alapján ez az eltérés nem tekinthető szisztematikusan szignifikánsnak. A hosszabb tesztvideókon végzett kvalitatív elemzés sem hozott egyértelmű döntést.
 
-A vizuális kiértékelés során a két konfiguráció általánosságban hasonló minőségű maszkokat produkált. Egy éjszakai felvételen rögzített esetben azonban a BCE-vel tanított modell elvesztette a rágcsáló kontúrját, míg a Dice változat megtartotta azt, ahogy azt a \ref{fig:bce_dice_night}. ábra szemlélteti. Ez az egyedi megfigyelés nem tekinthető szisztematikus különbségnek, de arra utal, hogy a Dice veszteségfüggvény alacsony kontrasztú, éjszakai felvételeken robusztusabb viselkedést mutathat. A stabilabb konvergenciát biztosító súlyozott BCE maradt a munkafolyamat alapja.
+Éjszakai, alacsony kontrasztú felvételeken azonban megfigyelhető volt, hogy a BCE-vel tanított modell egyes képkockákon elveszíti a rágcsáló kontúrját, míg a Dice változat megtartja azt, ahogy azt a \ref{fig:bce_dice_night}. és a \ref{fig:dice_better_night_2}. ábra szemlélteti. Albínó rágcsálón rögzített felvételeknél ezzel szemben nem volt ilyen egyértelmű különbség. A \ref{fig:bce_better_albino}. ábra egy olyan esetet mutat, ahol a BCE ad jobb eredményt, de találhatók olyan példák is, ahol a Dice bizonyul pontosabbnak. A stabilabb konvergenciát biztosító súlyozott BCE maradt a munkafolyamat alapja.
 
 \begin{figure}[hbt!]
 \centering
@@ -547,7 +547,7 @@ SegFormer B3 (kétlépcsős)       & 0.7625 & 0.8559 & 0.4142 & 52.8469 \\
 }
 \end{table}
 
-A kétlépcsős architektúra minden metrikában a legjobb eredményt érte el. A legmagasabb mIoU (0.7625) és Boundary IoU (0.4142) értékeket, valamint a legalacsonyabb Hausdorff-távolságot (52.85 px) produkálta. Ez igazolja, hogy a finomabb térbeli részletekre fókuszáló második lépés érdemben javítja a kontúrok pontosságát. Ugyanakkor a kétlépcsős rendszer videón vizsgálva egy gyakorlati hátrányt mutat. A befoglaló doboz keret-keret közötti ingadozása vibrálást (flickering) okoz a maszk pozíciójában, ami az egylépéses modellnél nem figyelhető meg. Ez azt jelenti, hogy a számszerű fölény ellenére a kétlépcsős megközelítés nem tekinthető egyértelműen jobb választásnak az egylépéses modellekkel szemben. A két architektúra között kompromisszumot kell kötni a statikus pontosság és a temporális stabilitás között.
+A kétlépcsős architektúra minden metrikában a legjobb eredményt érte el. A legmagasabb mIoU (0.7625) és Boundary IoU (0.4142) értékeket, valamint a legalacsonyabb Hausdorff-távolságot (52.85 px) produkálta. Ez igazolja, hogy a finomabb térbeli részletekre fókuszáló második lépés érdemben javítja a kontúrok pontosságát. Ugyanakkor a kétlépcsős rendszer videón vizsgálva több gyakorlati hátrányt mutat. A befoglaló doboz keret-keret közötti ingadozása vibrálást (flickering) okoz a maszk pozíciójában, ami az egylépéses modellnél nem figyelhető meg. Éjszakai felvételeken ez különösen zavaró, mivel az élénk színű maszk folyamatos pozíció- és alakváltozása szemmel követve kellemetlen vizuális hatást kelt. További korlát, hogy ha a rágcsáló a ketrec kamerához közeli falára mászik, a perspektíva torzítása miatt az állat a képen a valóságosnál sokszorosannak tűnő kiterjedéssel jelenik meg. Ilyenkor a stage 1 modell befoglaló doboza a képkeret nagy részét lefedi, a stage 2 modell számára előállított felnagyított képszelvény nem tartalmaz érdemi pluszinformációt a teljes felbontású bemenethez képest, ahogy azt a \ref{fig:close_rat_magnified}. ábra szemlélteti. Albínó egyedek esetén a kétlépcsős modell teljesítménye erősen függ az előtér-háttér kontraszttól. Sötét hátterű ketrecben, ahol a világos bundájú állat jól elkülönül a környezetétől, a rendszer szinte tökéletes maszkot produkál, ahogy azt a \ref{fig:albino_contrast}. ábra szemlélteti. Ha azonban a ketrec aljzatán vagy falain reflektív, világos felületek találhatók, a modell elveszíti az állatot, a maszk képkockáról képkockára látványosan eltérő helyre kerül. A számszerű fölény ellenére a kétlépcsős megközelítés ezért nem tekinthető egyértelműen jobb választásnak az egylépéses modellekkel szemben. A két architektúra között kompromisszumot kell kötni a statikus pontosság és a temporális stabilitás között.
 
 \section{Összehasonlítás a zero-shot modellekkel}
 
@@ -783,6 +783,71 @@ Szeged, \today
 \end{minipage}
 \caption{SegFormer B3 tipikus éjszakai kimenetei BCE és Dice veszteségfüggvénnyel.}
 \label{fig:segformer_night}
+\end{figure}
+
+
+\begin{figure}[hbt!]
+\centering
+\begin{minipage}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{images/dice-better-night-2-bce.png}
+
+    \small BCE veszteségfüggvény
+\end{minipage}
+\hfill
+\begin{minipage}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{images/dice-better-night-2.png}
+
+    \small Dice veszteségfüggvény
+\end{minipage}
+\caption{Egy másik éjszakai képkockán szintén megfigyelhető, hogy a BCE-vel tanított modell elveszíti a rágcsáló kontúrját, míg a Dice változat megtartja azt.}
+\label{fig:dice_better_night_2}
+\end{figure}
+
+\begin{figure}[hbt!]
+\centering
+\begin{minipage}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{images/bce-better-albino.png}
+
+    \small BCE veszteségfüggvény
+\end{minipage}
+\hfill
+\begin{minipage}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{images/bce-better-albino-dice.png}
+
+    \small Dice veszteségfüggvény
+\end{minipage}
+\caption{Albínó rágcsálón rögzített képkockán a BCE-vel tanított modell pontosabb maszkot ad, míg a Dice változat alulteljesít. Éjszakaihoz hasonló egyértelmű tendencia albínó esetén nem figyelhető meg.}
+\label{fig:bce_better_albino}
+\end{figure}
+
+\begin{figure}[hbt!]
+\centering
+\includegraphics[width=0.7\textwidth]{images/close-rat-magnified-result.png}
+\caption{Ha a rágcsáló a kamera közelébe ér, a perspektíva torzítása miatt a kétlépcsős rendszer stage 2 modelljének felnagyított képszelvénye nem tartalmaz érdemi pluszinformációt a teljes felbontású bemenethez képest.}
+\label{fig:close_rat_magnified}
+\end{figure}
+
+\begin{figure}[hbt!]
+\centering
+\begin{minipage}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{images/bce-magnify-better-with-albino.png}
+
+    \small Sötét háttér, megfelelő kontraszt
+\end{minipage}
+\hfill
+\begin{minipage}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{images/bce-magnify-better-with-albino-dice.png}
+
+    \small Világos, reflektív háttér
+\end{minipage}
+\caption{A kétlépcsős modell albínó rágcsáló szegmentációja sötét és világos háttér előtt. Sötét háttéren az előtér-háttér kontraszt elegendő a pontos maszkoláshoz, reflektív, világos háttér esetén a modell nem ad konzisztens eredményt.}
+\label{fig:albino_contrast}
 \end{figure}
 
 \end{document}
