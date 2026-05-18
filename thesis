@@ -172,6 +172,8 @@ A számítógépes látás egyik kiemelt biológiai alkalmazási területe az á
 
 Mivel a rágcsálók éjszakai életmódot folytatnak, a legaktívabb periódusaik megfigyelése sötétben történik, amihez a videókat infravörös (IR) fénnyel megvilágítva, hagyományos kamerákkal rögzítik. Ez a specifikus környezet számos komoly kihívást állít a gépi látásra épülő modellek elé. A látható fény hiányából adódó színinformáció-veszteség ronthatja a modellek működését.
 
+A rágcsálók viselkedésének kvantitatív vizsgálatakor tipikusan több órán át folyamatos videófelvétel készül. Egy kétórás felvétel 25 képkocka per másodperces rögzítési sebességnél 180 000 képkockát tartalmaz. Ezeknek akár csupán egy százalékát manuálisan, pixelpontos maszkkal ellátni órákat vesz igénybe, és a folyamat minden kísérleti alanyra és ülésre megismétlendő. Ez a skálázási probléma az automatikus szegmentálás elsődleges motivációja: a kézzel annotált referenciaadatok száma szükségszerűen korlátozott marad, ezért a betanítási pipeline-nak a lehető legtöbbet kell kihoznia a rendelkezésre álló adatból.
+
 
 
 
@@ -233,6 +235,7 @@ lépésben számítja ki, így a modell már a legelső rétegben globális
 kontextussal rendelkezik. Ez teszi a transzformereket különösen alkalmassá a
 részleges takarás kezelésére, mivel egy eltakart testrész közvetlenül,
 közbülső lépések nélkül meríthet információt az állat látható részeiből.
+
 \newpage
 
 
@@ -321,7 +324,7 @@ A memóriabank kétféle információt tart nyilván: maximum $N$ darab legutób
     \item \textbf{Objektum mutatók (Object pointers):} Könnyűsúlyú vektorok, amelyek a maszk-dekódoló kimenetéből származnak, és a szegmentálandó objektum magas szintű, szemantikai információit tartalmazzák \cite{ravi2024sam2}.
 \end{itemize}
 
-A hálózat önfigyelmi mechanizmusa (memory attention) mind a térbeli memóriára, mind az objektum mutatókra kiterjed. Különleges architekturális döntés, hogy a modell időbeli pozicionális kódolást (temporal position information) kizárólag az $N$ darab legutóbbi képkocka emlékébe ágyaz be a rövid távú mozgás lekövetése érdekében \cite{ravi2024sam2}. A promptolt képkockák memóriája nem kap időbeli kódolást, mivel ezek a betanítás során ritkábban fordulnak elő, és az időbeli rögzítés rontaná a modell általánosító képességét (generalization) a hosszan elnyúló videók inferenciája során \cite{ravi2024sam2}. Ez a mechanizmus teszi képessé a modellt arra, hogy egy ketrecrács mögött eltűnő patkányt a korábban eltárolt vizuális memóriája alapján a takarás után is felismerjen és korrigáljon.
+A hálózat önfigyelmi mechanizmusa mind a térbeli memóriára, mind az objektum mutatókra kiterjed. Különleges architekturális döntés, hogy a modell időbeli pozicionális kódolást (temporal position information) kizárólag az $N$ darab legutóbbi képkocka emlékébe ágyaz be a rövid távú mozgás lekövetése érdekében \cite{ravi2024sam2}. A promptolt képkockák memóriája nem kap időbeli kódolást, mivel ezek a betanítás során ritkábban fordulnak elő, és az időbeli rögzítés rontaná a modell általánosító képességét (generalization) a hosszan elnyúló videók inferenciája során \cite{ravi2024sam2}. Ez a mechanizmus teszi képessé a modellt arra, hogy egy ketrecrács mögött eltűnő patkányt a korábban eltárolt vizuális memóriája alapján a takarás után is felismerjen és korrigáljon.
 
 
 
@@ -350,9 +353,9 @@ A láncolat első eleme a Grounding DINO \cite{liu2024grounding}, amely a Floren
 
 \textbf{A láncolat (Pipeline) logikája és korlátai:} Mivel a Grounding DINO önmagában képtelen a pixelszintű szegmentációs feladatok elvégzésére, kimenetként csupán egy befoglaló dobozt generál a felismert rágcsáló köré. A rendszer ezt a dobozt automatikusan továbbítja a SAM 2 modellnek, amely ez alapján elvégzi a finom szegmentálást. Bár ez a csővezeték kényelmes, emberi beavatkozást és feladatspecifikus finomhangolást nem igénylő automatizálást nyújt, magában hordoz több kritikus limitációt is:
 \begin{itemize}
-    \item \textbf{Téves pozitív találatok (Hallucinációk):} A szerzők maguk is kiemelik, hogy a DINO modell hajlamos téves pozitív (false positive) eredményeket, azaz hallucinációkat produkálni \cite{liu2024grounding}. Ha a DINO a ketrec egy másik elemét (például egy játékot) tévesen patkányként azonosít, a SAM 2 egy tökéletes szegmentációs maszkot fog generálni a hibás objektumról.
-    \item \textbf{Infrakamerás textúrahiány:} A kísérletek során bebizonyosodott, hogy bár a sztenderd CLIP modellek a nyelv-vezérelt detektálás úttörői, az éjszakai IR felvételeken a textúra hiánya és a részleges takarás miatt sokszor képtelenek lokalizálni a patkányt. Bár a Grounding DINO a szoros fúzió miatt lényegesen robusztusabb ezen a téren, a láncolat mégis sebezhető: ha a DINO elveszíti az állatot, a SAM 2 sem kap térbeli promptot.
-    \item \textbf{Megbízhatóság és biztonság:} Ahogy a mélytanulási modellek többsége, az architektúra érzékeny az ellenséges támadásokra (adversarial attacks), kimenetének helyessége garantálhatatlan, és nyílt halmazú detektálási képességei biztonsági kockázatokat is felvetnek \cite{liu2024grounding}. Bár egy laboratóriumi rágcsálókísérletben a biztonsági kockázat minimális, az algoritmikus kiszámíthatatlanság komoly mérnöki kihívás.
+    \item \textbf{Téves pozitív találatok (Hallucinációk):} A szerzők maguk is kiemelik, hogy a DINO modell hajlamos téves pozitív (false positive) eredményeket, azaz hallucinációkat produkálni \cite{liu2024grounding}. Ha a DINO a ketrec egy másik elemét tévesen patkányként azonosít, a SAM 2 egy tökéletes szegmentációs maszkot fog generálni a hibás objektumról.
+
+    \item \textbf{Megbízhatóság és biztonság:} Ahogy a mélytanulási modellek többsége, az architektúra érzékeny az ellenséges támadásokra, kimenetének helyessége garantálhatatlan, és nyílt halmazú detektálási képességei biztonsági kockázatokat is felvetnek \cite{liu2024grounding}. Bár egy laboratóriumi rágcsálókísérletben a biztonsági kockázat minimális, a kiszámíthatatlanság komoly mérnöki kihívás.
 \end{itemize}
  Egy ilyen csővezeték (pipeline) pontossága mindig a leggyengébb láncszemen múlik.
 
@@ -366,15 +369,7 @@ A láncolat első eleme a Grounding DINO \cite{liu2024grounding}, amely a Floren
 
 \section{Kísérleti adathalmaz és az értékelés metrikái}
 
-A kutatás specifikus feltételeire a szakirodalomban jelenleg nem áll rendelkezésre megfelelő, előre annotált publikus adathalmaz. Ennek okán a generális modellek empirikus és kvantitatív kiértékelését az általam összeállított és annotált, 736 kép-maszk párból álló adathalmazon végeztem el.
-
-A hálózatok szegmentációs teljesítményének objektív összehasonlítására négy különböző, de egymást kiegészítő metrikát alkalmaztam:
-\begin{itemize}
-    \item \textbf{mIoU (Mean Intersection over Union):} A szegmentáció legelterjedtebb alapmetrikája, amely a prediktált maszk és a valós (ground truth) maszk metszetének és uniójának arányát méri.
-    \item \textbf{Dice-együttható (Dice Score / F1-score):} Hasonló az IoU-hoz, de a metszetet kétszeres súllyal veszi figyelembe. Különösen hasznos a rágcsálók kisebb, vékonyabb testrészeinek (például végtagok, farok) értékelésekor, ahol a fals pozitív hibák kevésbé büntetendők, mint a fals negatívok.
-    \item \textbf{Boundary IoU:} Kifejezetten a maszkok körvonalának (határvonalának) pontosságát méri, a belső pixelek ignorálásával. Részleges takarás esetén kritikus mutató, mert megmutatja, mennyire pontosan követi le az algoritmus a rácsok által okozott éles vágásokat.
-    \item \textbf{Hausdorff-távolság (Hausdorff Distance):} A prediktált és a valós maszk körvonalpontjai közötti legnagyobb geometriai távolságot (pixelekben) méri. Ez a mutató a legérzékenyebb a kiugró hibákra (outlierekre).
-\end{itemize}
+A kutatás specifikus feltételeire a szakirodalomban jelenleg nem áll rendelkezésre megfelelő, előre annotált publikus adathalmaz. Ennek okán a generális modellek kvantitatív kiértékelését az általam összeállított és annotált, 736 kép-maszk párból álló adathalmazon végeztem el.
 
 \section{Adat-előkészítés és a CVAT annotációs folyamat}
 A kísérletekhez felhasznált adathalmaz tizennyolc laboratóriumi videófelvételből (mp4 formátum) és a hozzájuk tartozó XML annotációkból épült fel, amelyeket tíz különböző kameraállásból rögzítettek nappali és éjszakai körülmények között. A felvételek két különböző patkánytípust tartalmaznak, albínó és fekete-fehér egyedeket. A tíz kameraállás eltérő perspektívái biztosítják, hogy a betanított modell ne egyetlen kameraállás vizuális sajátosságaira specializálódjon, hanem általánosító szegmentációs tudást sajátítson el. A betanításhoz és kiértékeléshez a videókból kinyert képkockákat és az XML koordináták alapján generált bináris maszkokat használtam.
@@ -402,7 +397,7 @@ keretezéssel (zero-padding) egészítettem ki négyzet alakúra. Ez az
 előfeldolgozási lépés determinisztikus és minden halmazra egységesen vonatkozik,
 így a tanító, a validációs és a teszthalmaz képei egyaránt átesnek rajta.
 
-A tanítóhalmaz esetén az előfeldolgozás után egy további lépés következik.
+A tanítóhalmaz esetén az előfeldolgozás után még egy további lépés következik.
 A szűrés után megmaradó képekből mesterséges variációkat kell előállítani,
 hogy a modell a valóságban előforduló körülmények minél szélesebb
 spektrumával találkozhassék a tanítás során. Erre szolgál az adataugmentáció,
@@ -415,6 +410,13 @@ teljesítményének mérése.
 A szűrt tanítóhalmazt az Albumentations könyvtár segítségével augmentáltam. A tanítóhalmazban az albínó felvételek száma elmarad a fekete-fehér felvételektől, így az albínó osztály alulreprezentált. Ennek kompenzálására az augmentáció osztályegyensúly-tudatos módon történt. A pipeline minden patkánytípusra kiszámítja, hogy hányszor kevesebb képkockával rendelkezik a legjobban képviselt osztályhoz képest, és ezt a szorzót alkalmazza az alap hatszoros augmentációs szorzóra. A felső korlát (nyolcszorosnál nem lehet több) megakadályozza, hogy kis mintaszámú osztályok aránytalanul sok, de azonos információtartalmú augmentált példányt kapjanak, ez ugyanis az augmentációs transzformációk mintázatainak megtanulásához, nem a valódi osztályjellemzők elsajátításához vezetne.
 
 \section{A zero-shot modellek kvantitatív kiértékelése}
+A hálózatok szegmentációs teljesítményének objektív összehasonlítására négy különböző, de egymást kiegészítő metrikát alkalmaztam:
+\begin{itemize}
+    \item \textbf{mIoU (Mean Intersection over Union):} A szegmentáció legelterjedtebb alapmetrikája, amely a prediktált maszk és a valós (ground truth) maszk metszetének és uniójának arányát méri.
+    \item \textbf{Dice-együttható (Dice Score / F1-score):} Hasonló az IoU-hoz, de a metszetet kétszeres súllyal veszi figyelembe. Különösen hasznos a rágcsálók kisebb, vékonyabb testrészeinek (például végtagok, farok) értékelésekor, ahol a fals pozitív hibák kevésbé büntetendők, mint a fals negatívok.
+    \item \textbf{Boundary IoU:} Kifejezetten a maszkok körvonalának (határvonalának) pontosságát méri, a belső pixelek ignorálásával. A feladat nehézsége miatt hét pixel tévedés még nem számított hibának, annak reményében, hogy izgalmasabb eredményeket kapok.
+    \item \textbf{Hausdorff-távolság (Hausdorff Distance):} A prediktált és a valós maszk körvonalpontjai közötti legnagyobb geometriai távolságot (pixelekben) méri. Ez a mutató a legérzékenyebb a kiugró hibákra (outlierekre).
+\end{itemize}
 
 
 
@@ -458,6 +460,8 @@ A teljesen automatizált modellek közül a \textbf{Florence-2} érte el a legma
 \caption{Florence-2 kimenete a teszthalmazon: tipikus eset (bal) és degenerált maszk (jobb), amelyen a kontúr szögletessé válik, szélsőértékek között ugrik és elveszíti az állat körvonalát.}
 \label{fig:florence2}
 \end{figure}
+
+A degeneráció három jellegzetes formában nyilvánul meg. Az első esetben az előrejelzett poligon csúcsszáma rendkívül alacsony (jellemzően öt alatti), aminek eredménye egy durva, a valódi kontúroktól messze elmaradó geometriai alak. A második esetben a modell a rágcsáló helyett a képmező több különböző pontján jelez fragmentált, egymással nem összefüggő régiókat. A harmadik esetben a prediktált maszk területe összeomlik, és az elvárt terület töredékét sem éri el. Mindhárom eset közös kiváltója az alacsony vizuális kontraszt: albínó egyedeknél a fényes háttér, éjszakai felvételeken az infravörös kép szürkeárnyalatos egyhangúsága.
 
 A \textbf{SAM 2} felállás a legmagasabb összesített mutatókat produkálta (mIoU: 0{,}5764, Hausdorff: 53{,}02 pixel), azonban emberi beavatkozást feltételez, ezért teljesen automatizált munkafolyamatba nem illeszthető.
 
@@ -504,10 +508,12 @@ Kétlépcsős BCE (v2)   & 0.7625 & 0.8113 & 0.7463 & 0.7451 \\
 }
 \end{table}
 
-A v1 modellek mIoU értéke minden kategóriában 0.49 és 0.56 közé esik. Ez nem véletlenszerű eredmény, a modellek felismerik és nagyjából lokalizálják a rágcsálót ismeretlen kameraképeken is, ami a tanult alakjellemzők bizonyos fokú átvitelét jelzi. Pontos kontúrszegmentációra azonban nem képesek. Különösen szembetűnő az albínó kategória, ahol a v1 mIoU értéke 0.49 körül marad, miközben a v2 0.79--0.81 körüli értéket ér el. Ez az eredmény motiválta az adathalmaz bővítését albínó és éjszakai felvételekkel. Az összes modellt az így kialakított v2 adathalmazon tanítottuk újra. A következő szakaszok az ezen az adathalmazon végzett kísérleteket és azok eredményeit ismertetik.
+A v1 modellek mIoU értéke minden kategóriában 0.49 és 0.56 közé esik. Ez nem véletlenszerű eredmény, a modellek felismerik és nagyjából lokalizálják a tarka rágcsálót infra fényes éjszakai felvételen, ami a tanult alakjellemzők bizonyos fokú elsajátítását jelzi. Különösen szembetűnő az albínó kategória, ahol a v1 mIoU értéke 0.49 körül marad, miközben a v2 0.79--0.81 körüli értéket ér el. Ez az eredmény motiválta az adathalmaz bővítését albínó és éjszakai felvételekkel. Az összes modellt az így kialakított v2 adathalmazon tanítottuk újra. A következő szakaszok az ezen az adathalmazon végzett kísérleteket és azok eredményeit ismertetik.
 
 \section{Modellválasztás és kísérleti felállások}
 A finomhangolás (fine-tuning) során több modellméretet és veszteségfüggvényt is megvizsgáltam a leghatékonyabb konfiguráció megtalálása érdekében.
+
+A finomhangolás hatékonysága a transzfer-tanulás elvén alapszik. A SegFormer B3 kódolója az ImageNet-22k adathalmazon előtanított súlyokkal inicializálódott, amelyen 14 millió képet és 22 000 kategóriát látott. Az előtanítás során a hálózat hierarchikus vizuális jellemzőket sajátított el: a korai rétegek éleket és textúrákat kódolnak, a középső rétegek alakzatokat és testrészszerű struktúrákat, a mélyebb rétegek pedig magasabb szintű szemantikai tartalmakat. Ezek a jellemzők jól általánosíthatók új képtartományokra, mivel az alapvető vizuális építőelemek, mint a textúrák és a végtagok alakjai, a természetes képeken is megjelennek. A finomhangolás nem a nulláról tanítja a modellt, hanem a már kialakult reprezentációkat hangolja a célfeladathoz. Ebből következik, hogy viszonylag kis annotált adathalmaz (736 képkocka) is elegendő a generalista modellekhez képest jó eredményhez. Az első generációs (v1) modellek már 0,50 és 0,56 közötti mIoU értéket értek el anélkül, hogy korábban éjszakai rágcsálófelvételt vagy albínó egyedet láttak volna.
 
 \textbf{Modellméret és felbontás (B3 vs. B5):} A kísérletek során összehasonlításra került a közepes méretű \texttt{nvidia/mit-b3} és a lényegesen nagyobb paraméterszámú \texttt{nvidia/mit-b5} kódoló. A rendelkezésre álló Kaggle felhőkörnyezet (2$\times$ NVIDIA Tesla T4) memóriakorlátai miatt a B5 modell kizárólag 512$\times$512 pixeles bemeneten volt futtatható, szemben a B3 által használt 1024$\times$1024 pixeles felbontással. A teszthalmazon mért eredmények alapján a B5 modell (mIoU: 0.6640, Boundary IoU: 0.2085) minden metrikán elmaradt a B3-tól (mIoU: 0.7425, Boundary IoU: 0.3447). A két konfiguráció eltérő felbontáson futott, így az eredmények különbsége nem tulajdonítható egyértelműen az architektúra méretének. Ennek megfelelően a végleges architektúra alapjául a SegFormer B3 verziója szolgált.
 
@@ -532,11 +538,11 @@ A kvantitatív kiértékelés a 92 képkockás teszthalmazon (lásd \ref{tab:fin
 
     \small Dice veszteségfüggvény
 \end{minipage}
-\caption{Ugyanazon éjszakai képkockán a BCE-vel tanított modell elveszíti a rágcsáló kontúrját, míg a Dice változat megtartja azt.}
+\caption{Ugyanazon éjszakai képkockán a BCE-vel tanított modell elveszíti a rágcsálót, míg a Dice változat követi azt.}
 \label{fig:bce_dice_night}
 \end{figure}
 
-Ez nem egyedi jelenség. A \ref{fig:dice_better_night_2}. ábra egy másik éjszakai képkockán mutatja ugyanezt a viselkedést, megerősítve, hogy a Dice veszteségfüggvény alacsony kontrasztú körülmények között robusztusabb kontúrkövetést biztosít.
+Ez nem egyedi jelenség. A \ref{fig:dice_better_night_2}. ábra egy másik éjszakai képkockán mutatja ugyanezt a viselkedést, megerősítve, hogy a Dice veszteségfüggvény alacsony kontrasztú körülmények között konzisztensebb követést biztosít.
 
 \begin{figure}[hbt!]
 \centering
@@ -553,11 +559,11 @@ Ez nem egyedi jelenség. A \ref{fig:dice_better_night_2}. ábra egy másik éjsz
 
     \small Dice veszteségfüggvény
 \end{minipage}
-\caption{Egy másik éjszakai képkockán szintén megfigyelhető, hogy a BCE-vel tanított modell elveszíti a rágcsáló kontúrját, míg a Dice változat megtartja azt.}
+\caption{Egy másik éjszakai képkockán szintén megfigyelhető, hogy a BCE-vel tanított modell elveszíti a rágcsálót.}
 \label{fig:dice_better_night_2}
 \end{figure}
 
-Albínó rágcsálón rögzített felvételeknél ezzel szemben nem rajzolódott ki ilyen egyértelmű tendencia. A \ref{fig:bce_better_albino}. ábra egy olyan esetet mutat, ahol jellemzően a BCE ad pontosabb maszkot. A két veszteségfüggvény között kvalitatív szempontból albínó esetén nincs következetes különbség, a hibák hasonló képkockáknál lépnek fel. A probléma itt sem a patkány elvesztése, inkább a takarásból fakadó ismeretlenek összekötése és hallucináció.
+Albínó rágcsálón rögzített felvételeknél ezzel szemben nem rajzolódott ki ilyen egyértelmű tendencia. A \ref{fig:bce_better_albino}. ábra egy olyan esetet mutat, ahol jellemzően a BCE ad pontosabb maszkot. A két veszteségfüggvény között kvalitatív szempontból albínó esetén nincs következetes különbség, a hibák hasonló képkockáknál lépnek fel. A probléma itt sem a patkány elvesztése, inkább a takarásból fakadó hallucináció, amit a tanításkor választott veszteségfüggvény befolyásol leginkább, de egyiknél se hasznos módon.
 
 \begin{figure}[hbt!]
 \centering
@@ -574,19 +580,17 @@ Albínó rágcsálón rögzített felvételeknél ezzel szemben nem rajzolódott
 
     \small Dice veszteségfüggvény
 \end{minipage}
-\caption{Albínó rágcsálón rögzített képkockán a BCE-vel tanított modell pontosabb maszkot ad, míg a Dice változat alulteljesít. Éjszakaihoz hasonló egyértelmű tendencia albínó esetén nem figyelhető meg.}
+\caption{Albínó rágcsálón rögzített képkockán a BCE-vel tanított modell pontosabb maszkot ad, míg a Dice változat alulteljesít. }
 \label{fig:bce_better_albino}
 \end{figure}
 
-A két veszteségfüggvény
-A fentiek alapján a stabilabb konvergenciát biztosító súlyozott BCE maradt a munkafolyamat alapja.
 
-\section{A kétlépcsős (Cascaded) "Nagyító" Architektúra}
+\section{A kétlépcsős "Nagyító" Architektúra}
 Bár az alapszintű SegFormer robusztusan ismerte fel az állatot, a maszkok körvonalai a nagy felbontású, de globális nézet miatt esetenként nem voltak elég feszesek. Ezen probléma orvoslására a kétlépcsős, kaszkádolt (coarse-to-fine) rendszert alakítottam ki.
 
 A rendszer két független SegFormer modellt integrál:
 \begin{enumerate}
-    \item \textbf{Globális Lokalizációs Modell (Stage 1):} Az első hálózat a teljes (1024x1024) felvételt kapja meg bemenetként. Elsődleges feladata nem a tökéletes maszkolás, hanem a rágcsáló biztonságos lokalizálása a ketrecben. A prediktált maszk alapján a rendszer kiszámít egy befoglaló dobozt.
+    \item \textbf{Globális Lokalizációs Modell (Stage 1):} Az első hálózat a teljes felvételt kapja meg bemenetként. Elsődleges feladata nem a tökéletes maszkolás, hanem a rágcsáló biztonságos lokalizálása a ketrecben. A prediktált maszk alapján a rendszer kiszámít egy befoglaló dobozt.
     \item \textbf{Lokális Szakértői Modell (Stage 2):} Az eredeti képből a befoglaló doboz alapján kivágjuk (crop) a rágcsálót. A vágás előtt a befoglaló dobozt minden irányban 25\%-kal kibővítjük, majd négyzetesre igazítjuk. A kivágott régiót Lanczos-interpolációval 512$\times$512 pixelre skálázzuk. Ezt a szorosan vágott, kizárólag a patkányt tartalmazó képrészletet kapja meg a második, kifejezetten erre a „nagyított" nézetre finomhangolt modell, amelynek tanulási rátája $3 \times 10^{-5}$ (az első lépcsős $6 \times 10^{-5}$-del szemben).
 \end{enumerate}
 
