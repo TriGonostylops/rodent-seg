@@ -586,12 +586,12 @@ Albínó rágcsálón rögzített felvételeknél ezzel szemben nem rajzolódott
 
 
 \section{A kétlépcsős "Nagyító" Architektúra}
-Bár az alapszintű SegFormer robusztusan ismerte fel az állatot, a maszkok körvonalai a nagy felbontású, de globális nézet miatt esetenként nem voltak elég feszesek. Ezen probléma orvoslására a kétlépcsős, kaszkádolt (coarse-to-fine) rendszert alakítottam ki.
+Bár az alapszintű SegFormer robusztusan ismerte fel az állatot, a maszkok körvonalai esetenként nem voltak elég feszesek. A modell figyelme a teljes képkockára terjedt ki, így a ketrec rácsai és a képkeret szélein megjelenő zavaró részletek is befolyásolták a szegmentáció pontosságát. Ezen probléma orvoslására a kétlépcsős, kaszkádolt (coarse-to-fine) rendszert alakítottam ki.
 
 A rendszer két független SegFormer modellt integrál:
 \begin{enumerate}
     \item \textbf{Globális Lokalizációs Modell (Stage 1):} Az első hálózat a teljes felvételt kapja meg bemenetként. Elsődleges feladata nem a tökéletes maszkolás, hanem a rágcsáló biztonságos lokalizálása a ketrecben. A prediktált maszk alapján a rendszer kiszámít egy befoglaló dobozt.
-    \item \textbf{Lokális Szakértői Modell (Stage 2):} Az eredeti képből a befoglaló doboz alapján kivágjuk (crop) a rágcsálót. A vágás előtt a befoglaló dobozt minden irányban 25\%-kal kibővítjük, majd négyzetesre igazítjuk. A kivágott régiót Lanczos-interpolációval 512$\times$512 pixelre skálázzuk. Ezt a szorosan vágott, kizárólag a patkányt tartalmazó képrészletet kapja meg a második, kifejezetten erre a „nagyított" nézetre finomhangolt modell, amelynek tanulási rátája $3 \times 10^{-5}$ (az első lépcsős $6 \times 10^{-5}$-del szemben).
+    \item \textbf{Lokális Szakértői Modell (Stage 2):} Az eredeti képből a befoglaló doboz alapján kivágjuk (crop) a rágcsálót. A vágás előtt a befoglaló dobozt minden irányban 25\%-kal kibővítjük, majd négyzetesre igazítjuk. A kivágott régiót Lanczos-interpolációval 512$\times$512 pixelre skálázzuk. Ezt a kivágott képrészletet kapja meg a második, kifejezetten erre a nézetre finomhangolt modell. A háttér eltávolítása a ketrecrácsot, a képkeret-artefaktumokat és egyéb zavaró elemeket kizárja, így a modell figyelme teljes egészében a rágcsálóra összpontosulhat.
 \end{enumerate}
 
 A két lépcsőhöz eltérő valószínűségi küszöböket alkalmaztam. Az első lépcső 0,30-as küszöbértékkel dolgozik, hogy a befoglaló doboz kiszámításához szükséges durva maszk biztosan tartalmazza az állat teljes kiterjedését, még akkor is, ha egyes testrészek valószínűsége viszonylag alacsony. A második lépcső kimenetét szigorúbb, 0,60-as küszöbértékkel binárisítjuk, mivel a szorosan vágott, patkánytestközpontú bemeneten a háttér aránya lényegesen kisebb, az esetlegesen magas valószínűséget kapó háttérpixelek száma is csekélyebb. Az így kapott teljes felbontású maszkon egy további utófeldolgozási lépést alkalmazunk: az összes összefüggő komponens közül kizárólag a legnagyobb területű marad meg, a kisebb szigetek eldobásra kerülnek. Ez az ún. Highlander-szabály kizárja a ketrec rácsain, vagy a kamerakép peremén keletkező apró szürkeárnyalatos foltokat, amelyek téves pozitív detektálásként jelennének meg a végső maszkban.
@@ -601,7 +601,7 @@ Ha a rágcsáló a ketrec kamerához közeli falára mászik, a perspektíva tor
 \begin{figure}[hbt!]
 \centering
 \includegraphics[width=0.55\textwidth]{images/close-rat-magnified-result.png}
-\caption{Ha a rágcsáló a kamera közelébe ér, a perspektíva torzítása miatt a kétlépcsős rendszer stage 2 modelljének felnagyított képszelvénye nem tartalmaz érdemi pluszinformációt a teljes felbontású bemenethez képest.}
+\caption{Ha a rágcsáló a kamera közelébe ér, a perspektíva torzítása miatt a befoglaló doboz szinte a teljes képkockát lefedi. A stage 2 modelljének bemenete így alig különbözik a teljes felbontású képtől, ezért a háttér eltávolításának előnye nem érvényesül.}
 \label{fig:close_rat_magnified}
 \end{figure}
 
@@ -649,12 +649,12 @@ SegFormer B3 (kétlépcsős, Dice loss) & 0.7675 & 0.8618 & 0.4149 & 62.3083 \\
 }
 \end{table}
 
-A kétlépcsős architektúra mindkét konfigurációban felülmúlja az egylépéses modelleket. A BCE-vel tanított változat érte el a legjobb Hausdorff-távolságot (52.85 px) és Boundary IoU értéket (0.4142), míg a Dice veszteségfüggvénnyel tanított változat magasabb mIoU értéket produkált (0.7675), de gyengébb Hausdorff-távolsággal (62.31 px). Ez igazolja, hogy a finomabb térbeli részletekre fókuszáló második lépés érdemben javítja a kontúrok pontosságát.
+A kétlépcsős architektúra mindkét konfigurációban felülmúlja az egylépéses modelleket. A BCE-vel tanított változat érte el a legjobb Hausdorff-távolságot (52.85 px) és Boundary IoU értéket (0.4142), míg a Dice veszteségfüggvénnyel tanított változat magasabb mIoU értéket produkált (0.7675), de gyengébb Hausdorff-távolsággal (62.31 px). Ez igazolja, hogy a rágcsálóra szűkített, háttérmentes bemeneten specializált második lépés érdemben javítja a kontúrok pontosságát.
 
 \section{A betanítás (Fine-tuning) hiperparaméterei}
 A kiválasztott SegFormer B3 modell finomhangolása a Kaggle felhőkörnyezetben, NVIDIA Tesla T4 grafikus kártyákon történt. A betanítást az alábbi hiperparaméterekkel végeztem:
 \begin{itemize}
-    \item \textbf{Optimalizáló és tanulási ráta:} AdamW optimalizálót alkalmaztam, $6 \times 10^{-5}$ értékű kezdeti tanulási rátával (learning rate).
+    \item \textbf{Optimalizáló és tanulási ráta:} AdamW optimalizálót alkalmaztam. Az első lépcső modelljét $6 \times 10^{-5}$, a második lépcső modelljét $3 \times 10^{-5}$ értékű tanulási rátával (learning rate) tanítottam.
     \item \textbf{Tanítási ciklusok (Epochs):} A modell összesen 30 epochon keresztül tanult.
     \item \textbf{Kötegelt feldolgozás (Batch size \& Gradient Accumulation):} A magas (1024x1024) felbontás miatti hardveres korlátok áthidalására a batch size értékét 1-re csökkentettem, amelyet 16-os gradiens akkumulációval (gradient accumulation) egészítettem ki, így biztosítva a stabil tanulást és a memóriakorlátok betartását.
 \end{itemize}
@@ -698,8 +698,8 @@ Az alábbi fejlesztési irányok becsült hatásuk sorrendjében szerepelnek.
 \textbf{Adathalmaz bővítése.}
 A pontosság növelésének legegyenesebb útja több annotált kép-maszk pár bevonása. A jelenlegi adathalmaz 736 képkockát tartalmaz tíz kameraállásból, ami korlátozza a modell által látott póz- és megvilágítás-variációk körét. Új kameraállások, különböző laborberendezések vagy hosszabb felvételsorozatok bevonása közvetlenül javítaná az általánosítóképességet. Az aktív tanulás (active learning) elvét alkalmazva célszerű elsőként azokat a képkockákat annotálni, amelyeken a modell jelenlegi bizonytalansága a legnagyobb, így a befektetett annotációs munka a maximális teljesítményjavulást hozza. A meglévő pipeline, az IoU-alapú szűréstől a kameranézet szerinti halmaz-szétválasztásig, strukturális módosítás nélkül képes befogadni az új adatokat.
 
-\textbf{Memória-alapú temporális követés.}
-A jelenlegi rendszer képkockánként önállóan dönt, ami a kétlépcsős architektúrában vibrálást (flickering) okoz, ha a befoglaló doboz pozíciója keret-keret között ingadozik. Egy lehetséges megoldás, hogy a modell a predikció során nemcsak az aktuális képkocka tartalmát, hanem korábbi, magas megbízhatóságú képkockák vizuális memóriáját is figyelembe veszi. Ha a rendszer azokat a képkockákat, amelyeken a predikció valószínűsége egyértelműen magas (például tiszta, takarás nélküli felvételek), vizuális referenciaként tárolja, ezek az ankerek az alacsony kontrasztú vagy elmosódott képkockákon nyújtott szegmentációt stabilizálhatják. Ez a megközelítés rokon a SAM 2 kereszt-képkocka memória-figyelemmechanizmusával, amely videós üzemmódban a korábbi képkockák jellemzőit használja a jelen képkocka szegmentálásának kontextusává. A meglévő SegFormer-alapú pipeline-ba ez viszonylag kevés módosítással integrálható lenne, mivel csak az inferenciaszintű memóriakezelést érinti, a modelltanítást nem.
+\textbf{Temporális stabilizáció.}
+A jelenlegi rendszer képkockánként önállóan dönt, ami a kétlépcsős architektúrában vibrálást (flickering) okoz, ha a befoglaló doboz pozíciója keret-keret között ingadozik. A stabilizáció inferenciaszintű heurisztikával is megvalósítható, újratanítás nélkül. A befoglaló doboz pozíciójának exponenciális mozgóátlaggal való simítása keret-keret között kiszűri az egyszeri kirívó ugrásokat. Kiegészítő megközelítés, hogy a rendszer elutasítja azt a befoglaló dobozt, amelynek mérete vagy pozíciója az előző képkockához képest egy előre meghatározott küszöböt meghalad, és helyette az előző képkocka dobozát tartja meg. Ezek a módszerek kizárólag az inferencia utófeldolgozási lépéseit érintik, a modell súlyait és betanítási folyamatát nem.
 
 \textbf{Ensemble-alapú predikció (tesztkori augmentáció).}
 A véletlen erdő (random forest) elvéhez hasonlóan, ahol sok gyenge döntési fa szavazata együttesen erős és robusztus jóslatot ad, a szegmentációs modell is futtatható ugyanazon képkockán többször, különböző bemeneti variációkkal. A tesztkori augmentáció (test-time augmentation, TTA) során a képkocka eredeti formájában és több transzformált változatában (vízszintes tükrözés, kis forgatás, fényerő-eltolás) kerül feldolgozásra, a kapott maszkok pixelenkénti átlagolása pedig egyetlen, robusztusabb predikciót eredményez. Ez a módszer új tanítást vagy annotációt nem igényel, kizárólag inferenciaidőt áldoz a megbízhatóság növeléséért. Különösen ígéretes a nehéz esetekben, ahol egyetlen futtatás bizonytalanságot mutat, például alacsony kontrasztú albínó egyedek vagy elmosódott éjszakai felvételek esetén. A kétlépcsős architektúra természetesen terjeszthető ki: az első lépcső TTA-val több befoglaló-doboz jelöltet állít elő, a második lépcső mindegyiket finomítja, az eredmények pedig összefésülhetők.
