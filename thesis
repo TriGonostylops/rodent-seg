@@ -587,7 +587,7 @@ Albínó rágcsálón rögzített felvételeknél ezzel szemben nem rajzolódott
 
 
 \section{A kétlépcsős "nagyító" architektúra}
-Bár az alapszintű SegFormer robusztusan ismerte fel az állatot, a maszkok körvonalai esetenként nem voltak elég feszesek. A modell figyelme a teljes képkockára terjedt ki, így a ketrec rácsai és a képkeret szélein megjelenő zavaró részletek is befolyásolták a szegmentáció pontosságát. Ezen probléma orvoslására a kétlépcsős, kaszkádolt (coarse-to-fine) rendszert alakítottam ki.
+ A modell figyelme a teljes képkockára terjedt ki, így a ketrec rácsai és a képkeret szélein megjelenő zavaró részletek is befolyásolták a szegmentáció pontosságát. Ezen probléma orvoslására a kétlépcsős, kaszkádolt (coarse-to-fine) rendszert alakítottam ki.
 
 A rendszer két független SegFormer modellt integrál:
 \begin{enumerate}
