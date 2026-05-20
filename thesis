@@ -343,7 +343,7 @@ A láncolat első eleme a Grounding DINO \cite{liu2024grounding}, amely a Floren
 \textbf{Szoros modalitás-fúzió (Tight Modality Fusion):} Míg a korábbi modellek a vizuális és szöveges jellemzőket sokszor elkülönítve kezelték, a Grounding DINO egy hagyományos, eredetileg zárt halmazra tervezett detektor architektúráját veszi alapul. Ezt a klasszikus struktúrát három feldolgozási fázisra bontja, és ezek mindegyikében szorosan fuzionálja a nyelvi és képi adatokat, ezáltal alakítva át a modellt egy nyílt halmazú detektorrá \cite{liu2024grounding}. Ez a fúzió három elemen alapul:
 
 \begin{enumerate}
-    \item \textbf{Jellemző-erősítő (Feature enhancer):} A képi és szöveges jellemzők (embeddingek) már a korai rétegekben interakcióba lépnek egy kereszt-figyelmi (cross-attention) mechanizmus révén. A szöveges prompt mintegy szűrőként funkcionálva megnöveli (felerősíti) a promptnak megfelelő képi régiók matematikai súlyát, így a vizuális reprezentáció már a feldolgozás elején "szöveg-tudatossá" válik \cite{liu2024grounding}.
+    \item \textbf{Jellemző-erősítő (Feature enhancer):} A képi és szöveges jellemzők (embeddingek) már a korai rétegekben interakcióba lépnek egy kereszt-figyelmi (cross-attention) mechanizmus révén. A szöveges prompt szűrőként funkcionálva megnöveli (felerősíti) a promptnak megfelelő képi régiók matematikai súlyát, így a vizuális reprezentáció már a feldolgozás elején "szöveg-tudatossá" válik \cite{liu2024grounding}.
     \item \textbf{Nyelv-vezérelt lekérdezés-kiválasztás (Language-guided query selection):} A hagyományos detektorok statikus, tanult lekérdezéseivel (queries) szemben a hálózat dinamikusan, a megadott szöveg alapján választja ki azokat a képi jellemzőket, amelyek a legnagyobb szemantikai egyezést mutatják a prompttal. Ez biztosítja, hogy a modell a kezdeti befoglaló dobozokat célzottan a legrelevánsabb területekre helyezze \cite{liu2024grounding}.
     \item \textbf{Kereszt-modalitású dekódoló (Cross-modality decoder):} A kiválasztott lekérdezések (kezdeti dobozok) finomhangolása egy iteratív folyamat során történik, ahol a modell párhuzamosan vizsgálja a képi kontúrokat és a szöveges jelentést. Ez a fázis felelős a dobozok térbeli koordinátáinak pontosításáért és a végső osztályozási magabiztosság (confidence score) megállapításáért \cite{liu2024grounding}.
 \end{enumerate}
@@ -397,7 +397,7 @@ előfeldolgozási lépés determinisztikus és minden halmazra egységesen vonat
 így a tanító, a validációs és a teszthalmaz képei egyaránt átesnek rajta.
 
 A tanítóhalmaz esetén az előfeldolgozás után még egy további lépés következik.
-A szűrés után megmaradó képekből mesterséges variációkat kell előállítani,
+A megmaradó képekből mesterséges variációkat kell előállítani,
 hogy a modell a valóságban előforduló körülmények minél szélesebb
 spektrumával találkozhassék a tanítás során. Erre szolgál az adataugmentáció,
 amely geometriai transzformációkkal (vízszintes tükrözés, forgatás, skálázás)
@@ -406,7 +406,7 @@ a tanítóhalmazt. A validációs és teszthalmaz képeire ez nem vonatkozik, mi
 a kiértékelés célja a modell valós, transzformálatlan képeken nyújtott
 teljesítményének mérése.
 
-A szűrt tanítóhalmazt az Albumentations könyvtár segítségével augmentáltam. A tanítóhalmazban az albínó felvételek száma elmarad a fekete-fehér felvételektől, így az albínó osztály alulreprezentált. Ennek kompenzálására az augmentáció osztályegyensúly-tudatos módon történt. A pipeline minden patkánytípusra kiszámítja, hogy hányszor kevesebb képkockával rendelkezik a legjobban képviselt osztályhoz képest, és ezt a szorzót alkalmazza az alap hatszoros augmentációs szorzóra. A felső korlát (nyolcszorosnál nem lehet több) megakadályozza, hogy kis mintaszámú osztályok aránytalanul sok, de azonos információtartalmú augmentált példányt kapjanak, ez ugyanis az augmentációs transzformációk mintázatainak megtanulásához, nem a valódi osztályjellemzők elsajátításához vezetne.
+A szűrt tanítóhalmazt a python Albumentations könyvtárának segítségével augmentáltam. A tanítóhalmazban az albínó felvételek száma elmarad a fekete-fehér felvételektől, így az albínó osztály alulreprezentált. Ennek kompenzálására az augmentáció osztályegyensúly tudatában történt. A pipeline minden patkánytípusra kiszámítja, hogy hányszor kevesebb képkockával rendelkezik a legjobban képviselt osztályhoz képest, és ezt a szorzót alkalmazza az alap hatszoros augmentációs szorzóra. A felső korlát (nyolcszorosnál nem lehet több) megakadályozza, hogy kis mintaszámú osztályok aránytalanul sok, de azonos információtartalmú augmentált példányt kapjanak, ez ugyanis az augmentációs transzformációk mintázatainak megtanulásához, nem a valódi osztályjellemzők elsajátításához vezetne.
 
 \section{A zero-shot modellek kvantitatív kiértékelése}
 A hálózatok szegmentációs teljesítményének objektív összehasonlítására négy különböző, de egymást kiegészítő metrikát alkalmaztam:
@@ -443,7 +443,7 @@ SAM 2 & 0.5764 & 0.7075 & 0.2488 & 53.0209 \\
 
 A kapott mérési eredmények tökéletesen tükrözik a 4. fejezetben felvázolt architekturális sajátosságokat és korlátokat. A táblázatban szereplő három modell mindegyike az elvárható szinten teljesítette az alapfeladatot, azonban egymástól minőségileg eltérő karakterisztikával.
 
-A teljesen automatizált modellek közül a \textbf{Florence-2} érte el a legmagasabb átfedési mutatókat (mIoU: 0{,}5083), a Hausdorff-távolsága azonban messze a legrosszabb volt (105{,}73 pixel), amely a modell képlékenységére utal. A modell bizonyos képkockákon feszes maszkokat ad, amelyek többnyire pontosan követik a végtagokat. Gyakori azonban, hogy a maszk szögletessé, durvává válik és szélsőértékek között ugrálva teljesen elveszti az állat körvonalát. Néha töredezett maszk esetén egyetlen összefüggő alakzat helyett az egyes testrészeket egymástól független poligonként szegmentálja a modell. Ennél az anomáliánál a maszk hirtelen a tipikus méret sokszorosára terjed ki. A hibás képkockák utólagos szűrés nélkül nem azonosíthatók és a jó minőségű szegmensek közé ékelődve vibrálást okoznak a generált videóban (lásd \ref{fig:florence2}. ábra).
+A teljesen automatizált modellek közül a \textbf{Florence-2} érte el a legmagasabb átfedési mutatókat (mIoU: 0{,}5083), a Hausdorff-távolsága azonban messze a legrosszabb volt (105{,}73 pixel), amely a modell inkonzisztenciájára utal. A modell bizonyos képkockákon feszes maszkokat ad, amelyek többnyire pontosan követik a végtagokat. Gyakori azonban, hogy a maszk szögletessé, durvává válik és szélsőértékek között ugrálva teljesen elveszti az állat körvonalát. Néha töredezett maszk esetén egyetlen összefüggő alakzat helyett az egyes testrészeket egymástól független poligonként szegmentálja a modell. Ennél az anomáliánál a maszk hirtelen a tipikus méret sokszorosára terjed ki. A hibás képkockák utólagos szűrés nélkül nem azonosíthatók és a jó minőségű szegmensek közé ékelődve vibrálást okoznak a generált videóban (lásd \ref{fig:florence2}. ábra).
 
 \begin{figure}[hbt!]
 \centering
@@ -464,7 +464,7 @@ A degeneráció három jellegzetes formában nyilvánul meg. Az első esetben az
 
 A \textbf{SAM 2} felállás a legmagasabb összesített mutatókat produkálta (mIoU: 0{,}5764, Hausdorff: 53{,}02 pixel), azonban emberi beavatkozást feltételez, ezért teljesen automatizált munkafolyamatba nem illeszthető.
 
-A \textbf{SAM 2} és \textbf{Grounded-SAM 2} modellek az előzőekkel ellentétes minőségi profilt mutatnak. Kvantitatív mutatóik első ránézésre egyértelműen gyengébbek, a kvalitatív eredmények azonban lényegesen kiegyensúlyozottabb, vizuálisan folyamatosabb videót adnak. A memóriabank mechanizmusa jól megfigyelhető a patkány farkán ahogy a modell egy korábbi, jó minőségű szegmentált képkockájára épít, és azt terjeszti tovább a következőre. Ez a mechanizmus ugyanakkor kétélű: ha a modell egyszer pontatlan maszkra alapoz, a hiba propagálódik. Ez magyarázza a Grounded-SAM 2 látványosan rosszabb átfedési mutatóit, mivel a Grounding DINO detektáló lépés kiesése esetén a SAM 2 maszk-dekódoló sem képes megbízható kimenetet produkálni. A vizsgált zero-shot modellek közül minden felhasználási esetre a Grounded-SAM 2 tűnik optimálisabb választásnak, köszönhetően a kiegyensúlyozottabb és konzisztensebb kimenetének.
+A \textbf{SAM 2} és \textbf{Grounded-SAM 2} modellek az előzőekkel ellentétes minőségi profilt mutatnak. Kvantitatív mutatóik első ránézésre egyértelműen gyengébbek, a kvalitatív eredmények azonban lényegesen kiegyensúlyozottabb, vizuálisan folyamatosabb videót adnak. A memóriabank mechanizmusa jól megfigyelhető, ahogy a modell egy korábbi, jó minőségű szegmentált képkockájára épít, és azt terjeszti tovább a következőre. Ez a mechanizmus ugyanakkor kétélű, ha a modell egyszer pontatlan maszkra alapoz, a hiba propagálódik.  A vizsgált zero-shot modellek közül minden felhasználási esetre a Grounded-SAM 2 tűnik optimálisabb választásnak, köszönhetően a kiegyensúlyozottabb és konzisztensebb kimenetének.
 
 
 
@@ -487,7 +487,7 @@ A hagyományos szegmentációs dekódolók számításigényesek, mert a kódol�
 
 \section{Az adathalmaz fejlesztése és az első generációs modellek}
 
-A finomhangolás kiindulópontja mintegy 306 fekete-fehér patkány kép-maszk párból álló adathalmaz volt, amely kizárólag nappali felvételeket tartalmazott, albínó egyedek és éjszakai kamerarekordingok nem szerepeltek benne. Az ezen a készleten tanított első generációs (v1) modellek teszthalmazon mért eredményeit a \ref{tab:generalization}. táblázat foglalja össze az egyes felvételkategóriákra lebontva.
+A finomhangolás kiindulópontja 306 fekete-fehér patkány kép-maszk párból álló adathalmaz volt, amely kizárólag nappali felvételeket tartalmazott, albínó egyedek és éjszakai kamerarekordingok nem szerepeltek benne. Az ezen a készleten tanított első generációs (v1) modellek teszthalmazon mért eredményeit a \ref{tab:generalization}. táblázat foglalja össze az egyes felvételkategóriákra lebontva.
 
 \begin{table}[hbt!]
 \centering
@@ -507,16 +507,18 @@ Kétlépcsős BCE (v2)   & 0.7625 & 0.8113 & 0.7463 & 0.7451 \\
 }
 \end{table}
 
-A v1 modellek mIoU értéke minden kategóriában 0.49 és 0.56 közé esik. Ez nem véletlenszerű eredmény, a modellek felismerik és nagyjából lokalizálják a tarka rágcsálót infra fényes éjszakai felvételen, ami a tanult alakjellemzők bizonyos fokú elsajátítását jelzi. Különösen szembetűnő az albínó kategória, ahol a v1 mIoU értéke 0.49 körül marad, miközben a v2 0.79--0.81 körüli értéket ér el. Ez az eredmény motiválta az adathalmaz bővítését albínó és éjszakai felvételekkel. Az összes modellt az így kialakított v2 adathalmazon tanítottuk újra. A következő szakaszok az ezen az adathalmazon végzett kísérleteket és azok eredményeit ismertetik.
+Az első modellek mIoU értéke minden kategóriában 0.49 és 0.56 közé esik. Ez nem véletlenszerű eredmény, a modellek felismerik és nagyjából lokalizálják a tarka rágcsálót infra fényes éjszakai felvételen, ami a tanult alakjellemzők bizonyos fokú elsajátítását jelzi. Különösen szembetűnő az albínó kategória, ahol a v1 mIoU értéke 0.49 körül marad, miközben a v2 0.79--0.81 körüli értéket ér el. Ez az eredmény motiválta az adathalmaz bővítését albínó és éjszakai felvételekkel. Az összes modellt az így kialakított, bővített adathalmazon tanítottam újra.
 
-\section{Modellválasztás és kísérleti felállások}
-A finomhangolás (fine-tuning) során több modellméretet és veszteségfüggvényt is megvizsgáltam a leghatékonyabb konfiguráció megtalálása érdekében.
+\section{Modellválasztás és veszteségfüggvény felállások}
+A finomhangolás (fine-tuning) során több modellméretet és veszteségfüggvényt is megvizsgáltam a leghatékonyabb konfiguráció beállítása érdekében.
 
 A finomhangolás hatékonysága a transzfer-tanulás elvén alapszik. A SegFormer B3 kódolója az ImageNet-22k adathalmazon előtanított súlyokkal inicializálódott, amelyen 14 millió képet és 22 000 kategóriát látott. Az előtanítás során a hálózat hierarchikus vizuális jellemzőket sajátított el: a korai rétegek éleket és textúrákat kódolnak, a középső rétegek alakzatokat és testrészszerű struktúrákat, a mélyebb rétegek pedig magasabb szintű szemantikai tartalmakat. Ezek a jellemzők jól általánosíthatók új képtartományokra, mivel az alapvető vizuális építőelemek, mint a textúrák és a végtagok alakjai, a természetes képeken is megjelennek. A finomhangolás nem a nulláról tanítja a modellt, hanem a már kialakult reprezentációkat hangolja a célfeladathoz. Ebből következik, hogy viszonylag kis annotált adathalmaz (736 képkocka) is elegendő a generalista modellekhez képest jó eredményhez. Az első generációs (v1) modellek már 0,50 és 0,56 közötti mIoU értéket értek el anélkül, hogy korábban éjszakai rágcsálófelvételt vagy albínó egyedet láttak volna.
 
 \textbf{Modellméret és felbontás (B3 vs. B5):} A kísérletek során összehasonlításra került a közepes méretű \texttt{nvidia/mit-b3} és a lényegesen nagyobb paraméterszámú \texttt{nvidia/mit-b5} kódoló. A rendelkezésre álló Kaggle felhőkörnyezet (2$\times$ NVIDIA Tesla T4) memóriakorlátai miatt a B5 modell kizárólag 512$\times$512 pixeles bemeneten volt futtatható, szemben a B3 által használt 1024$\times$1024 pixeles felbontással. A teszthalmazon mért eredmények alapján a B5 modell (mIoU: 0.6640, Boundary IoU: 0.2085) minden metrikán elmaradt a B3-tól (mIoU: 0.7425, Boundary IoU: 0.3447). A két konfiguráció eltérő felbontáson futott, így az eredmények különbsége nem tulajdonítható egyértelműen az architektúra méretének. Ennek megfelelően a végleges architektúra alapjául a SegFormer B3 verziója szolgált.
 
 \textbf{Veszteségfüggvények (weighted BCE vs. Dice):} A szegmentációs pontosság növelése érdekében két veszteségfüggvényt vizsgáltam, mindkettővel ugyanazon az adathalmazon tanítva a modellt. A BCE pixelenként értékeli a predikciót. Mivel a képeken a háttérpixelek száma jóval meghaladja a rágcsáló pixeleinek számát, a háttér osztály súlyát 1,0-ra, a rágcsáló osztályét 5,0-ra állítottam.
+
+Ezzel szemben a Dice-veszteség kiküszöböli a manuális súlyozás szükségességét. Képlete a helyes találatokat (True Positive) kétszeres súllyal veszi figyelembe a számlálóban és a nevezőben is. Ettől reméltem, hogy a farok és fülek részleteinek megőrzéséhez vezetnek majd. Mivel a hálózat tanításához differenciálható függvényre van szükség, a metrika Soft Dice változatát alkalmaztam, amely a bináris értékek helyett a modell folytonos valószínűségi kimeneteit használja.
 
 A kvantitatív kiértékelés a 92 képkockás teszthalmazon (lásd \ref{tab:finetuned_results}. táblázat) nagyon hasonló eredményt mutat a két konfiguráció között, a BCE mIoU értéke 0,7425, a Dice-é 0,7452. A teszthalmaz mérete alapján ez az eltérés nem tekinthető szisztematikusan szignifikánsnak. A hosszabb tesztvideókon végzett kvalitatív elemzés sem hozott egyértelmű döntést.
 
@@ -584,13 +586,13 @@ Albínó rágcsálón rögzített felvételeknél ezzel szemben nem rajzolódott
 \end{figure}
 
 
-\section{A kétlépcsős "Nagyító" Architektúra}
+\section{A kétlépcsős "nagyító" architektúra}
 Bár az alapszintű SegFormer robusztusan ismerte fel az állatot, a maszkok körvonalai esetenként nem voltak elég feszesek. A modell figyelme a teljes képkockára terjedt ki, így a ketrec rácsai és a képkeret szélein megjelenő zavaró részletek is befolyásolták a szegmentáció pontosságát. Ezen probléma orvoslására a kétlépcsős, kaszkádolt (coarse-to-fine) rendszert alakítottam ki.
 
 A rendszer két független SegFormer modellt integrál:
 \begin{enumerate}
     \item \textbf{Globális Lokalizációs Modell (Stage 1):} Az első hálózat a teljes felvételt kapja meg bemenetként. Elsődleges feladata nem a tökéletes maszkolás, hanem a rágcsáló biztonságos lokalizálása a ketrecben. A prediktált maszk alapján a rendszer kiszámít egy befoglaló dobozt.
-    \item \textbf{Lokális Szakértői Modell (Stage 2):} Az eredeti képből a befoglaló doboz alapján kivágjuk (crop) a rágcsálót. A vágás előtt a befoglaló dobozt minden irányban 25\%-kal kibővítjük, majd négyzetesre igazítjuk. A kivágott régiót Lanczos-interpolációval 512$\times$512 pixelre skálázzuk. Ezt a kivágott képrészletet kapja meg a második, kifejezetten erre a nézetre finomhangolt modell. A háttér eltávolítása a ketrecrácsot, a képkeret-artefaktumokat és egyéb zavaró elemeket kizárja, így a modell figyelme teljes egészében a rágcsálóra összpontosulhat.
+    \item \textbf{Lokális Szakértői Modell (Stage 2):} Az eredeti képből a befoglaló doboz alapján kivágom (crop) a rágcsálót. A vágás előtt a befoglaló dobozt minden irányban 25\%-kal kibővítjük. A kivágott régiót Lanczos-interpolációval 512$\times$512 pixelre skálázva. Ezt a kivágott képrészletet kapja meg a második, kifejezetten erre a nézetre finomhangolt modell.
 \end{enumerate}
 
 A két lépcsőhöz eltérő valószínűségi küszöböket alkalmaztam. Az első lépcső 0,30-as küszöbértékkel dolgozik, hogy a befoglaló doboz kiszámításához szükséges durva maszk biztosan tartalmazza az állat teljes kiterjedését, még akkor is, ha egyes testrészek valószínűsége viszonylag alacsony. A második lépcső kimenetét szigorúbb, 0,60-as küszöbértékkel binárisítjuk, mivel a szorosan vágott, patkánytestközpontú bemeneten a háttér aránya lényegesen kisebb, az esetlegesen magas valószínűséget kapó háttérpixelek száma is csekélyebb. Az így kapott teljes felbontású maszkon egy további utófeldolgozási lépést alkalmazunk: az összes összefüggő komponens közül kizárólag a legnagyobb területű marad meg, a kisebb szigetek eldobásra kerülnek. Ez az ún. Highlander-szabály kizárja a ketrec rácsain, vagy a kamerakép peremén keletkező apró szürkeárnyalatos foltokat, amelyek téves pozitív detektálásként jelennének meg a végső maszkban.
